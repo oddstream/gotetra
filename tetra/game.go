@@ -15,8 +15,8 @@ func init() {
 
 // ScreenWidth and ScreenHeight are exported to main.go for ebiten.SetWindowSize()
 const (
-	ScreenWidth  = 640
-	ScreenHeight = 480
+	ScreenWidth  = 700
+	ScreenHeight = 900
 	boardWidth   = 6
 	boardHeight  = 8
 )
@@ -53,12 +53,14 @@ func (g *Game) Update() error {
 
 // Draw draws the current game to the given screen.
 func (g *Game) Draw(screen *ebiten.Image) {
+	// screen.Fill(backgroundColor)
+
 	if g.gridImage == nil {
 		w, h := g.grid.Size()
+		// println("gridImage", w, h)
 		g.gridImage = ebiten.NewImage(w, h)
 	}
-	screen.Fill(backgroundColor)
-	g.grid.Draw(g.gridImage)
+	// center gridImage in the screen
 	op := &ebiten.DrawImageOptions{}
 	sw, sh := screen.Size()
 	bw, bh := g.gridImage.Size()
@@ -66,4 +68,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	y := (sh - bh) / 2
 	op.GeoM.Translate(float64(x), float64(y))
 	screen.DrawImage(g.gridImage, op)
+
+	g.grid.Draw(g.gridImage)
 }

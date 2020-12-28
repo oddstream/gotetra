@@ -12,12 +12,11 @@ import (
 type Grid struct {
 	width  int
 	height int
-	tiles  []Tile
+	tiles  []*Tile // a slice (not array!) of pointers to Tile objects
 }
 
 func (g *Grid) findTile(x, y int) *Tile {
-	for i := 0; i < len(g.tiles); i++ {
-		t := &g.tiles[i]
+	for _, t := range g.tiles {
 		if t.X == x && t.Y == y {
 			return t
 		}
@@ -27,23 +26,16 @@ func (g *Grid) findTile(x, y int) *Tile {
 
 // NewGrid create a Grid object
 func NewGrid(w, h int) (*Grid, error) {
-	g := &Grid{width: w, height: h}
-	g.tiles = make([]Tile, w*h)
-	for i := 0; i < len(g.tiles); i++ {
-		t := &g.tiles[i]
-		x := i % w
-		y := i / w
-		t.X = x
-		t.Y = y
-		// g.tiles[i] = NewTile(x, y)
+	g := &Grid{width: w, height: h, tiles: make([]*Tile, w*h)}
+	for i := range g.tiles {
+		g.tiles[i] = NewTile(i%w, i/w)
 	}
 	// for i, t := range g.tiles {
 	// 	println(i, t.X, t.Y)
 	// }
-	for i := 0; i < len(g.tiles); i++ {
-		t := &g.tiles[i]
-		x := i % w
-		y := i / w
+	for _, t := range g.tiles {
+		x := t.X
+		y := t.Y
 		t.N = g.findTile(x, y-1)
 		t.E = g.findTile(x+1, y)
 		t.S = g.findTile(x, y+1)
@@ -71,7 +63,7 @@ func NewGrid(w, h int) (*Grid, error) {
 
 // Size returns the size of the grid in pixels
 func (g *Grid) Size() (int, int) {
-	return g.width * 100, g.height * 100
+	return g.width * TileWidth, g.height * TileHeight
 }
 
 // Update the board state (transitions, user input)
@@ -83,9 +75,8 @@ func (g *Grid) Update() error {
 func (g *Grid) Draw(gridImage *ebiten.Image) {
 	// display the background
 	gridImage.Fill(backgroundColor)
-	// then tell each tile to draw itself
-	for i := 0; i < len(g.tiles); i++ {
-		t := &g.tiles[i]
-		t.Draw()
+	// then tell each tile to draw itself on the gridImage
+	for _, t := range g.tiles {
+		t.Draw(gridImage)
 	}
 }
