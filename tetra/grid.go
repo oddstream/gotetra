@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 // Grid is an object representing the grid of tiles
@@ -41,6 +42,7 @@ func NewGrid(w, h int) (*Grid, error) {
 		t.S = g.findTile(x, y+1)
 		t.W = g.findTile(x-1, y)
 	}
+
 	// for i, t := range g.tiles {
 	// 	println(i, t.X, t.Y, t.N, t.E, t.S, t.W)
 	// }
@@ -58,6 +60,14 @@ func NewGrid(w, h int) (*Grid, error) {
 	if t10.W != t0 {
 		log.Fatal("t10 t0 not linked")
 	}
+
+	for _, t := range g.tiles {
+		t.PlaceCoin()
+	}
+	for _, t := range g.tiles {
+		t.SetImage()
+	}
+
 	return g, nil
 }
 
@@ -66,8 +76,34 @@ func (g *Grid) Size() (int, int) {
 	return g.width * TileWidth, g.height * TileHeight
 }
 
+// FindTileAt finds the tile under the mouse click or touch
+func (g *Grid) FindTileAt(x, y int) *Tile {
+	for _, t := range g.tiles {
+		x0, y0, x1, y1 := t.Rect()
+		if x > x0 && x < x1 && y > y0 && y < y1 {
+			return t
+		}
+	}
+	return nil
+}
+
 // Update the board state (transitions, user input)
 func (g *Grid) Update() error {
+	// if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		x, y := ebiten.CursorPosition()
+		originX := (ScreenWidth - (g.width * TileWidth)) / 2
+		originY := (ScreenHeight - (g.height * TileHeight)) / 2
+		// println(originX, originY, x, y)
+		tile := g.FindTileAt(x-originX, y-originY)
+		if tile != nil {
+			tile.Rotate()
+		}
+	}
+
+	for _, t := range g.tiles {
+		t.Update()
+	}
 	return nil
 }
 

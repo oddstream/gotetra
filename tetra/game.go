@@ -16,9 +16,14 @@ func init() {
 // ScreenWidth and ScreenHeight are exported to main.go for ebiten.SetWindowSize()
 const (
 	ScreenWidth  = 700
-	ScreenHeight = 900
+	ScreenHeight = 1000
 	boardWidth   = 6
-	boardHeight  = 8
+	boardHeight  = 9
+	NORTH        = 1
+	EAST         = 2
+	SOUTH        = 4
+	WEST         = 8
+	MASK         = 15
 )
 
 // Game represents a game state.
