@@ -3,12 +3,18 @@
 package tetra
 
 import (
+	"fmt"
 	"image"
+	"image/color"
+	"io/ioutil"
 	"log"
 	"math/rand"
 
+	"github.com/golang/freetype/truetype"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/text"
+	"golang.org/x/image/font"
 )
 
 // TileWidth is the unscaled width of a tile in pixels
@@ -23,7 +29,7 @@ var (
 	coin2ImageInfoMap = map[uint]imageInfo{
 		0:                           {0, 0},
 		NORTH:                       {1, 180},
-		EAST:                        {1, 270},
+		EAST:                        {1, -90},
 		SOUTH:                       {1, 0},
 		WEST:                        {1, 90},
 		NORTH | SOUTH:               {2, 0},
@@ -31,15 +37,16 @@ var (
 		NORTH | EAST | WEST | SOUTH: {3, 0},
 		NORTH | EAST | SOUTH:        {4, 90},
 		EAST | SOUTH | WEST:         {4, 180},
-		SOUTH | WEST | NORTH:        {4, 270},
+		SOUTH | WEST | NORTH:        {4, -90},
 		WEST | NORTH | EAST:         {4, 0},
 		NORTH | EAST:                {5, 90},
 		NORTH | WEST:                {5, 0},
 		SOUTH | EAST:                {5, 180},
-		SOUTH | WEST:                {5, 270},
+		SOUTH | WEST:                {5, -90},
 	}
 
-	tileImages map[int]*ebiten.Image
+	tileImages      map[int]*ebiten.Image
+	mplusNormalFont font.Face
 )
 
 func getSubImageAndScaleDown(tilesheetImage *ebiten.Image, rect image.Rectangle) *ebiten.Image {
@@ -56,7 +63,7 @@ func getSubImageAndScaleDown(tilesheetImage *ebiten.Image, rect image.Rectangle)
 }
 
 func init() {
-	tilesheetImage, _, err := ebitenutil.NewImageFromFile("assets/tilesheet9x9x100.png")
+	tilesheetImage, _, err := ebitenutil.NewImageFromFile("assets/tilesheet.png")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -90,6 +97,21 @@ func init() {
 		4: getSubImageAndScaleDown(tilesheetImage, spriteMapRects[4]),
 		5: getSubImageAndScaleDown(tilesheetImage, spriteMapRects[5]),
 	}
+
+	bytes, err := ioutil.ReadFile("assets/Acme-Regular.ttf")
+	if err != nil {
+		log.Fatal(err)
+	}
+	// https://pkg.go.dev/golang.org/x/image@v0.0.0-20201208152932-35266b937fa6/font
+	tt, err := truetype.Parse(bytes)
+	if err != nil {
+		log.Fatal(err)
+	}
+	mplusNormalFont = truetype.NewFace(tt, &truetype.Options{
+		Size:    24,
+		DPI:     72,
+		Hinting: font.HintingFull,
+	})
 
 	// println("Tile.init")
 }
@@ -125,7 +147,7 @@ func (t *Tile) PlaceCoin() {
 	links := [4]*Tile{t.N, t.E, t.S, t.W}
 	// opplinks := [4]*Tile{t.S,t.W,t.N,t.E}
 	for d := 0; d < 4; d++ {
-		if rand.Float64() < 0.2 {
+		if rand.Float64() < 0.25 {
 			if links[d] != nil {
 				t.coins |= directions[d]
 				links[d].coins |= opposites[d]
@@ -151,22 +173,79 @@ func (t *Tile) Rect() (x0 int, y0 int, x1 int, y1 int) {
 	return // using named return parameters
 }
 
+func shiftBits(num uint) uint {
+	if num&0b1000 == 0b1000 {
+		num = num << 1
+		num = num & 0b1111
+		num = num | 1
+	} else {
+		num = num << 1
+	}
+	return num
+}
+
+func unshiftBits(num uint) uint {
+	if num&1 == 1 {
+		num = num >> 1
+		num = num | 0b1000
+	} else {
+		num = num >> 1
+	}
+	return num
+}
+
+// Jumble shifts the bits in the tile a random number of times
+func (t *Tile) Jumble() {
+	r := rand.Float64()
+	if r < 0.25 {
+		t.coins = shiftBits(t.coins)
+	} else if r < 0.5 {
+		t.coins = unshiftBits(t.coins)
+	} else if r < 0.75 {
+		t.coins = shiftBits(t.coins)
+		t.coins = shiftBits(t.coins)
+	}
+}
+
 // Rotate shifts the tile 90 degrees clockwise
 func (t *Tile) Rotate() {
 	if 0 == t.coins {
 		return
 	}
-	if t.coins&WEST == WEST {
-		// high bit is set
-		t.coins = t.coins << 1
-		t.coins = t.coins & MASK
-		t.coins = t.coins | 1
-	} else {
-		t.coins = t.coins << 1
+	if t.currDegrees != t.targDegrees {
+		return
 	}
-	info := coin2ImageInfoMap[t.coins]
-	t.targDegrees = info.deg
+	t.coins = shiftBits(t.coins)
+	t.targDegrees = t.currDegrees + 90
+	if t.targDegrees >= 360 {
+		t.targDegrees = 0
+	}
 	// println("rotate", t.X, t.Y, t.coins)
+}
+
+// IsComplete returns true if the tile aligns properly with it's neighbours
+func (t *Tile) IsComplete() bool {
+	if (t.coins & NORTH) == NORTH {
+		if (t.N == nil) || ((t.N.coins & SOUTH) == 0) {
+			return false
+		}
+	}
+	if (t.coins & EAST) == EAST {
+		if (t.E == nil) || ((t.E.coins & WEST) == 0) {
+			return false
+		}
+	}
+	if (t.coins & SOUTH) == SOUTH {
+		if (t.S == nil) || ((t.S.coins & NORTH) == 0) {
+			return false
+		}
+	}
+	if (t.coins & WEST) == WEST {
+		if (t.W == nil) || ((t.W.coins & EAST) == 0) {
+			return false
+		}
+	}
+	return true
 }
 
 // Update the tile state (transitions, user input)
@@ -176,6 +255,10 @@ func (t *Tile) Update() error {
 		t.currDegrees += 5
 		if t.currDegrees >= 360 {
 			t.currDegrees = 0
+		}
+		if t.currDegrees == t.targDegrees {
+			t.SetImage()
+			// println("rotated", t.X, t.Y, "complete", t.IsComplete())
 		}
 	}
 
@@ -196,10 +279,34 @@ func (t *Tile) Draw(gridImage *ebiten.Image) error {
 		op.GeoM.Translate(float64(TileWidth)/2.0, float64(TileHeight)/2.0)
 	}
 
+	// Reset RGB (not Alpha) 0 forcibly
+	op.ColorM.Scale(0, 0, 0, 1)
+	r := float64(colorGold.R) / 0xff
+	g := float64(colorGold.G) / 0xff
+	b := float64(colorGold.B) / 0xff
+	op.ColorM.Translate(r, g, b, 0)
+
 	x := t.X * TileWidth
 	y := t.Y * TileHeight
 	op.GeoM.Translate(float64(x), float64(y))
 	gridImage.DrawImage(t.tileImage, op)
+
+	if t.coins != 0 {
+		str := fmt.Sprintf("%04b", t.coins)
+		f := mplusNormalFont
+		bound, _ := font.BoundString(f, str)
+		w := (bound.Max.X - bound.Min.X).Ceil()
+		h := (bound.Max.Y - bound.Min.Y).Ceil()
+		x = x + (TileWidth-w)/2
+		y = y + (TileHeight-h)/2 + h
+		var c color.Color
+		if t.IsComplete() {
+			c = colorGold
+		} else {
+			c = colorTeal
+		}
+		text.Draw(gridImage, str, f, x, y, c)
+	}
 
 	return nil
 }

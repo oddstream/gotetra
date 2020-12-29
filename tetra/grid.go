@@ -46,25 +46,35 @@ func NewGrid(w, h int) (*Grid, error) {
 	// for i, t := range g.tiles {
 	// 	println(i, t.X, t.Y, t.N, t.E, t.S, t.W)
 	// }
-	t0 := g.findTile(0, 0)
-	if t0 == nil {
-		log.Fatal("cannot find t0")
+	t00 := g.findTile(0, 0)
+	if t00 == nil {
+		log.Fatal("cannot find t00")
 	}
 	t10 := g.findTile(1, 0)
 	if t10 == nil {
 		log.Fatal("cannot find t10")
 	}
-	if t0.E != t10 {
-		log.Fatal("t0 t10 not linked")
+	if t00.E != t10 {
+		log.Fatal("t00 t10 not linked")
 	}
-	if t10.W != t0 {
+	if t10.W != t00 {
 		log.Fatal("t10 t0 not linked")
 	}
-
+	t01 := g.findTile(0, 1)
+	if t01 == nil {
+		log.Fatal("cannot find t01")
+	}
+	if t00.S != t01 {
+		log.Fatal("t00 t01 not linked")
+	}
+	if t00.S.N != t00 {
+		log.Fatal("t00.S.N not linked")
+	}
 	for _, t := range g.tiles {
 		t.PlaceCoin()
 	}
 	for _, t := range g.tiles {
+		t.Jumble()
 		t.SetImage()
 	}
 
