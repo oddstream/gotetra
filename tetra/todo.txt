@@ -1,0 +1,11 @@
+(A) Save level state (where?)
+(A) Scale tiles to fit window
+(B) Clean tilesheet.png
+(B) endcaps?
+(B) expand colors.go
+(B) color palette
+(C) sections?
+(B) Sound
+
+X (A) Cleanly tick over to NextLevel when something IsComplete after mouse in Grid.Update
+X (B) display level

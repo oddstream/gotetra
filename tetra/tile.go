@@ -3,18 +3,13 @@
 package tetra
 
 import (
-	"fmt"
 	"image"
 	"image/color"
-	"io/ioutil"
 	"log"
 	"math/rand"
 
-	"github.com/golang/freetype/truetype"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"github.com/hajimehoshi/ebiten/v2/text"
-	"golang.org/x/image/font"
 )
 
 // TileWidth is the unscaled width of a tile in pixels
@@ -22,6 +17,15 @@ const TileWidth int = 100
 
 // TileHeight is the unscaled height of a tile in pixels
 const TileHeight int = 100
+
+// NORTH is the bit pattern for the upwards direction
+const (
+	NORTH = 0b0001
+	EAST  = 0b0010
+	SOUTH = 0b0100
+	WEST  = 0b1000
+	MASK  = 0b1111
+)
 
 type imageInfo struct{ img, deg int }
 
@@ -45,8 +49,8 @@ var (
 		SOUTH | WEST:                {5, -90},
 	}
 
-	tileImages      map[int]*ebiten.Image
-	mplusNormalFont font.Face
+	tileImages map[int]*ebiten.Image
+	// mplusNormalFont font.Face
 )
 
 func getSubImageAndScaleDown(tilesheetImage *ebiten.Image, rect image.Rectangle) *ebiten.Image {
@@ -98,37 +102,39 @@ func init() {
 		5: getSubImageAndScaleDown(tilesheetImage, spriteMapRects[5]),
 	}
 
-	bytes, err := ioutil.ReadFile("assets/Acme-Regular.ttf")
-	if err != nil {
-		log.Fatal(err)
-	}
-	// https://pkg.go.dev/golang.org/x/image@v0.0.0-20201208152932-35266b937fa6/font
-	tt, err := truetype.Parse(bytes)
-	if err != nil {
-		log.Fatal(err)
-	}
-	mplusNormalFont = truetype.NewFace(tt, &truetype.Options{
-		Size:    24,
-		DPI:     72,
-		Hinting: font.HintingFull,
-	})
+	// bytes, err := ioutil.ReadFile("assets/Acme-Regular.ttf")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// // https://pkg.go.dev/golang.org/x/image@v0.0.0-20201208152932-35266b937fa6/font
+	// tt, err := truetype.Parse(bytes)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// mplusNormalFont = truetype.NewFace(tt, &truetype.Options{
+	// 	Size:    24,
+	// 	DPI:     72,
+	// 	Hinting: font.HintingFull,
+	// })
 
 	// println("Tile.init")
 }
 
 // Tile object describes a tile
 type Tile struct {
-	X, Y        int
-	N, E, S, W  *Tile
-	coins       uint
+	X, Y       int
+	N, E, S, W *Tile
+
 	tileImage   *ebiten.Image
 	currDegrees int
 	targDegrees int
-	rotating    bool
+
+	coins uint
+	color color.RGBA
+
 	// if currDegrees != targDegrees then tile is lerping/rotating
 	// rotating tile does not receive input
 
-	// TODO map from coins bit field to sprite image index and rotate angle
 	// TODO section this tile belongs to
 	// TODO color
 	// don't need hammingWeight because graphics not created dynamically
@@ -140,12 +146,18 @@ func NewTile(x, y int) *Tile {
 	return t
 }
 
+// Reset prepares a Tile for a new level by resetting just gameplay data, not structural data
+func (t *Tile) Reset() {
+	t.coins = 0
+}
+
 // PlaceCoin sets up a random config for this tile
 func (t *Tile) PlaceCoin() {
 	directions := [4]uint{NORTH, EAST, SOUTH, WEST}
 	opposites := [4]uint{SOUTH, WEST, NORTH, EAST}
 	links := [4]*Tile{t.N, t.E, t.S, t.W}
-	// opplinks := [4]*Tile{t.S,t.W,t.N,t.E}
+
+	// t.coins = 0
 	for d := 0; d < 4; d++ {
 		if rand.Float64() < 0.25 {
 			if links[d] != nil {
@@ -225,6 +237,9 @@ func (t *Tile) Rotate() {
 
 // IsComplete returns true if the tile aligns properly with it's neighbours
 func (t *Tile) IsComplete() bool {
+	if t.currDegrees != t.targDegrees {
+		return false
+	}
 	if (t.coins & NORTH) == NORTH {
 		if (t.N == nil) || ((t.N.coins & SOUTH) == 0) {
 			return false
@@ -246,6 +261,11 @@ func (t *Tile) IsComplete() bool {
 		}
 	}
 	return true
+}
+
+// SetColor sets this tile's color
+func (t *Tile) SetColor(color color.RGBA) {
+	t.color = color
 }
 
 // Update the tile state (transitions, user input)
@@ -281,9 +301,9 @@ func (t *Tile) Draw(gridImage *ebiten.Image) error {
 
 	// Reset RGB (not Alpha) 0 forcibly
 	op.ColorM.Scale(0, 0, 0, 1)
-	r := float64(colorGold.R) / 0xff
-	g := float64(colorGold.G) / 0xff
-	b := float64(colorGold.B) / 0xff
+	r := float64(t.color.R) / 0xff
+	g := float64(t.color.G) / 0xff
+	b := float64(t.color.B) / 0xff
 	op.ColorM.Translate(r, g, b, 0)
 
 	x := t.X * TileWidth
@@ -291,22 +311,22 @@ func (t *Tile) Draw(gridImage *ebiten.Image) error {
 	op.GeoM.Translate(float64(x), float64(y))
 	gridImage.DrawImage(t.tileImage, op)
 
-	if t.coins != 0 {
-		str := fmt.Sprintf("%04b", t.coins)
-		f := mplusNormalFont
-		bound, _ := font.BoundString(f, str)
-		w := (bound.Max.X - bound.Min.X).Ceil()
-		h := (bound.Max.Y - bound.Min.Y).Ceil()
-		x = x + (TileWidth-w)/2
-		y = y + (TileHeight-h)/2 + h
-		var c color.Color
-		if t.IsComplete() {
-			c = colorGold
-		} else {
-			c = colorTeal
-		}
-		text.Draw(gridImage, str, f, x, y, c)
-	}
+	// if t.coins != 0 {
+	// 	str := fmt.Sprintf("%04b", t.coins)
+	// 	f := mplusNormalFont
+	// 	bound, _ := font.BoundString(f, str)
+	// 	w := (bound.Max.X - bound.Min.X).Ceil()
+	// 	h := (bound.Max.Y - bound.Min.Y).Ceil()
+	// 	x = x + (TileWidth-w)/2
+	// 	y = y + (TileHeight-h)/2 + h
+	// 	var c color.Color
+	// 	if t.IsComplete() {
+	// 		c = colorGold
+	// 	} else {
+	// 		c = colorTeal
+	// 	}
+	// 	text.Draw(gridImage, str, f, x, y, c)
+	// }
 
 	return nil
 }

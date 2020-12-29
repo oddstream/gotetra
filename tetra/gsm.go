@@ -4,6 +4,7 @@ package tetra
 
 // GameStateManager does what it says on the tin
 type GameStateManager struct {
+	// TODO implement a stack with Push(), Pop() methods
 	currentState GameState
 }
 

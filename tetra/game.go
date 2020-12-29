@@ -14,7 +14,6 @@ const (
 
 // Game represents a game state.
 type Game struct {
-	gsm *GameStateManager
 }
 
 // GSM provides global access to the game state manager

@@ -4,25 +4,14 @@ package tetra
 
 import (
 	"log"
-	"math/rand"
-	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
 
 // ScreenWidth and ScreenHeight are exported to main.go for ebiten.SetWindowSize()
 const (
 	boardWidth  = 6
 	boardHeight = 9
-	NORTH       = 0b0001
-	EAST        = 0b0010
-	SOUTH       = 0b0100
-	WEST        = 0b1000
-	MASK        = 0b1111
 )
 
 // Puzzle represents a game state.
@@ -38,6 +27,9 @@ func (p *Puzzle) Init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	w, h := p.grid.Size()
+	// println("gridImage", w, h)
+	p.gridImage = ebiten.NewImage(w, h)
 }
 
 // Layout implements ebiten.Game's Layout.
@@ -57,11 +49,6 @@ func (p *Puzzle) Update() error {
 func (p *Puzzle) Draw(screen *ebiten.Image) {
 	// screen.Fill(backgroundColor)
 
-	if p.gridImage == nil {
-		w, h := p.grid.Size()
-		// println("gridImage", w, h)
-		p.gridImage = ebiten.NewImage(w, h)
-	}
 	// center gridImage in the screen
 	op := &ebiten.DrawImageOptions{}
 	sw, sh := screen.Size()
