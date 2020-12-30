@@ -54,6 +54,10 @@ var (
 )
 
 func getSubImageAndScaleDown(tilesheetImage *ebiten.Image, rect image.Rectangle) *ebiten.Image {
+
+	// had a spot of bother scaling/rotating the tile image in Draw(), so pre-scale the tile images here
+	// extract sub image, scale it, draw it into another image, then draw that constucted image into gridImage
+
 	subImage := tilesheetImage.SubImage(rect).(*ebiten.Image)
 
 	scaledImage := ebiten.NewImage(TileWidth, TileHeight)
@@ -129,15 +133,17 @@ type Tile struct {
 	tileImage   *ebiten.Image
 	currDegrees int
 	targDegrees int
-
-	coins   uint
-	section int
-	color   *color.RGBA
+	currScale   float64
+	targScale   float64
+	coins       uint
+	section     int
+	color       *color.RGBA
 
 	// if currDegrees != targDegrees then tile is lerping/rotating
+	// if currScale != targScale then tile is lerping/disappearing
+
 	// rotating tile does not receive input
 
-	// TODO section this tile belongs to
 	// don't need hammingWeight because graphics not created dynamically
 }
 
@@ -153,7 +159,7 @@ func (t *Tile) Reset() {
 	t.section = 0
 	t.color = nil
 
-	t.SetImage() // reset to a bkank tile image
+	t.SetImage() // reset to a blank tile image
 }
 
 // PlaceCoin sets up a random config for this tile
@@ -201,6 +207,8 @@ func (t *Tile) SetImage() {
 	t.tileImage = tileImages[info.img]
 	t.currDegrees = info.deg
 	t.targDegrees = info.deg
+	t.currScale = 1.0
+	t.targScale = 1.0
 }
 
 // Rect gives the x,y coords of the tile's top left and bottom right corners, in screen coordinates
@@ -235,14 +243,20 @@ func unshiftBits(num uint) uint {
 
 // Jumble shifts the bits in the tile a random number of times
 func (t *Tile) Jumble() {
-	r := rand.Float64()
-	if r < 0.25 {
-		t.coins = shiftBits(t.coins)
-	} else if r < 0.5 {
+	/*
+		r := rand.Float64()
+		if r < 0.25 {
+			t.coins = shiftBits(t.coins)
+		} else if r < 0.5 {
+			t.coins = unshiftBits(t.coins)
+		} else if r < 0.75 {
+			t.coins = shiftBits(t.coins)
+			t.coins = shiftBits(t.coins)
+		}
+	*/
+	// TODO remove debugging jumble before release
+	if t.coins == NORTH || t.coins == SOUTH {
 		t.coins = unshiftBits(t.coins)
-	} else if r < 0.75 {
-		t.coins = shiftBits(t.coins)
-		t.coins = shiftBits(t.coins)
 	}
 }
 
@@ -325,6 +339,10 @@ func (t *Tile) IsCompleteSection(section int) bool {
 // Update the tile state (transitions, user input)
 func (t *Tile) Update() error {
 
+	if 0 == t.coins {
+		return nil
+	}
+
 	if t.currDegrees != t.targDegrees {
 		t.currDegrees += 5
 		if t.currDegrees >= 360 {
@@ -333,10 +351,15 @@ func (t *Tile) Update() error {
 		if t.currDegrees == t.targDegrees {
 			t.SetImage()
 			if t.G.IsSectionComplete(t.section) {
-				// println("section complete", t.section)
-				t.G.ResetSection(t.section)
+				t.G.TriggerScaleDown(t.section)
 			}
-			// println("rotated", t.X, t.Y, "complete", t.IsComplete())
+		}
+	}
+
+	if t.targScale < 1.0 {
+		t.currScale -= 0.01
+		if t.currScale <= t.targScale {
+			t.Reset()
 		}
 	}
 
@@ -347,7 +370,6 @@ func (t *Tile) Update() error {
 func (t *Tile) Draw(gridImage *ebiten.Image) error {
 
 	// scale, point translation, rotate, object translation
-	// extract sub image, scale it, rotate it, draw it into another image, then draw that constucted image into gridImage
 
 	op := &ebiten.DrawImageOptions{}
 
@@ -357,7 +379,7 @@ func (t *Tile) Draw(gridImage *ebiten.Image) error {
 		op.GeoM.Translate(float64(TileWidth)/2.0, float64(TileHeight)/2.0)
 	}
 
-	// Reset RGB (not Alpha) 0 forcibly
+	// Reset RGB (not Alpha) forcibly
 	if t.color != nil {
 		op.ColorM.Scale(0, 0, 0, 1)
 		r := float64(t.color.R) / 0xff
@@ -366,9 +388,21 @@ func (t *Tile) Draw(gridImage *ebiten.Image) error {
 		op.ColorM.Translate(r, g, b, 0)
 	}
 
-	x := t.X * TileWidth
-	y := t.Y * TileHeight
+	x := float64(t.X * TileWidth)
+	y := float64(t.Y * TileHeight)
+
+	if t.currScale > t.targScale {
+		// TODO understand why this works
+		x += float64(TileWidth/2) * (1.0 - t.currScale)
+		y += float64(TileHeight/2) * (1.0 - t.currScale)
+		op.GeoM.Scale(t.currScale, t.currScale)
+		// x -= float64(TileWidth) * (1.0 - t.currScale)
+		// y -= float64(TileHeight/2)*(1.0-t.currScale) + float64(TileHeight/2)
+		// TODO fade the alpha too
+	}
+
 	op.GeoM.Translate(float64(x), float64(y))
+
 	gridImage.DrawImage(t.tileImage, op)
 
 	// if t.coins != 0 {

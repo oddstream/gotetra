@@ -23,13 +23,7 @@ var GSM *GameStateManager = &GameStateManager{}
 func NewGame() (*Game, error) {
 	g := &Game{}
 
-	// pz := &Puzzle{}
-	// pz.Init()
-	// GSM.Switch(pz)
-
-	sp := &Splash{}
-	sp.Init()
-	GSM.Switch(sp)
+	GSM.Switch(NewSplash())
 
 	return g, nil
 }

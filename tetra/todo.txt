@@ -3,12 +3,13 @@ If it's bubble-wrap, then it has colored sections which disappear when complete.
 
 (A) Save level state (where?)
 (A) Scale tiles to fit window
-(B) Clean tilesheet.png
-(B) endcaps?
+(B) tilesheet with endcaps in overspill margin
 (B) expand colors.go
 (B) color palette
-(C) sections
 (B) Sound
+(C) opening menu to choose between puzzle (no sections) and bubble wrap
 
+(A) transition scale down of tile removal
 X (A) Cleanly tick over to NextLevel when something IsComplete after mouse in Grid.Update
 X (B) display level
+X sections

@@ -15,8 +15,9 @@ type Splash struct {
 	xPos, yPos int
 }
 
-// Init initializes a Splash/GameState object that was created by the caller
-func (s *Splash) Init() {
+// NewSplash creates and initializes a Splash/GameState object
+func NewSplash() *Splash {
+	s := &Splash{}
 	var err error
 	s.logoImage, _, err = ebitenutil.NewImageFromFile("assets/oddstream logo.png")
 	if err != nil {
@@ -25,6 +26,7 @@ func (s *Splash) Init() {
 	sx, sy := s.logoImage.Size()
 	s.xPos = -sx
 	s.yPos = (ScreenHeight - sy) / 2
+	return s
 }
 
 // Layout implements ebiten.Game's Layout
@@ -37,9 +39,7 @@ func (s *Splash) Update() error {
 	s.xPos += 20
 	if s.xPos > ScreenWidth {
 		println("change state to puzzle")
-		pz := &Puzzle{}
-		pz.Init()
-		GSM.Switch(pz)
+		GSM.Switch(NewPuzzle(4, 5))
 	}
 	return nil
 }

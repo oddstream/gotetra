@@ -33,7 +33,6 @@ func init() {
 		DPI:     72,
 		Hinting: font.HintingFull,
 	})
-
 }
 
 // Grid is an object representing the grid of tiles
@@ -180,11 +179,20 @@ func (g *Grid) IsSectionComplete(section int) bool {
 	return true
 }
 
-// ResetSection resets all the tiles in a section
-func (g *Grid) ResetSection(section int) {
+// TriggerScaleDown starts the tile disappear process
+func (g *Grid) TriggerScaleDown(section int) {
 	for _, t := range g.tiles {
 		if t.section == section {
-			t.Reset()
+			t.targScale = 0.1
+		}
+	}
+}
+
+// FilterSection applies a Tile function to all tiles in the section
+func (g *Grid) FilterSection(f func(*Tile), section int) {
+	for _, t := range g.tiles {
+		if t.section == section {
+			f(t)
 		}
 	}
 }

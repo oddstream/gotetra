@@ -8,28 +8,23 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// ScreenWidth and ScreenHeight are exported to main.go for ebiten.SetWindowSize()
-const (
-	boardWidth  = 4
-	boardHeight = 5
-)
-
 // Puzzle represents a game state.
 type Puzzle struct {
 	grid      *Grid
 	gridImage *ebiten.Image
 }
 
-// Init initializes a Level object that was created by the caller
-func (p *Puzzle) Init() {
+// NewPuzzle creates and initializes a Puzzle/GameState object
+func NewPuzzle(w, h int) *Puzzle {
+	p := &Puzzle{}
 	var err error
-	p.grid, err = NewGrid(boardWidth, boardHeight)
+	p.grid, err = NewGrid(w, h)
 	if err != nil {
 		log.Fatal(err)
 	}
-	w, h := p.grid.Size()
-	// println("gridImage", w, h)
-	p.gridImage = ebiten.NewImage(w, h)
+	sx, sy := p.grid.Size()
+	p.gridImage = ebiten.NewImage(sx, sy)
+	return p
 }
 
 // Layout implements ebiten.Game's Layout.
