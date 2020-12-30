@@ -40,7 +40,8 @@ func init() {
 type Grid struct {
 	width  int
 	height int
-	tiles  []*Tile // a slice (not array!) of pointers to Tile objects
+	tiles  []*Tile       // a slice (not array!) of pointers to Tile objects
+	colors []*color.RGBA // a slice of pointers to colors for the tiles, one color per section
 	level  int
 }
 
@@ -68,7 +69,7 @@ func (g *Grid) findTile(x, y int) *Tile {
 func NewGrid(w, h int) (*Grid, error) {
 	g := &Grid{width: w, height: h, tiles: make([]*Tile, w*h)}
 	for i := range g.tiles {
-		g.tiles[i] = NewTile(i%w, i/w)
+		g.tiles[i] = NewTile(g, i%w, i/w)
 	}
 	// for i, t := range g.tiles {
 	// 	println(i, t.X, t.Y)
@@ -109,6 +110,13 @@ func NewGrid(w, h int) (*Grid, error) {
 		}
 	*/
 
+	g.colors = []*color.RGBA{
+		&colorNavy,
+		&colorBlue,
+		&colorCornflowerBlue,
+		&colorLightSkyBlue,
+	} // golang gotcha no newline after last literal, must be comma or closing brace
+
 	// TODO load level from saved state
 	g.level = 0
 	g.NextLevel()
@@ -130,6 +138,55 @@ func (g *Grid) FindTileAt(x, y int) *Tile {
 		}
 	}
 	return nil
+}
+
+func (g *Grid) findUnsectionedTile() *Tile {
+	for _, t := range g.tiles {
+		if t.coins != 0 && t.color == nil {
+			return t
+		}
+	}
+	return nil
+}
+
+// ColorTiles sets the color and section for every tile
+func (g *Grid) ColorTiles() {
+	nextColor := 0
+	nextSection := 0
+	tile := g.findUnsectionedTile()
+	if tile == nil {
+		panic("no first unsection tile")
+	}
+	for tile != nil {
+		tile.ColorConnected(g.colors[nextColor], nextSection)
+		nextColor++
+		if nextColor >= len(g.colors) {
+			nextColor = 0
+		}
+		nextSection++
+		tile = g.findUnsectionedTile()
+	}
+}
+
+// IsSectionComplete returns true if all the tiles in a section are aligned
+func (g *Grid) IsSectionComplete(section int) bool {
+	for _, t := range g.tiles {
+		if t.section == section {
+			if !t.IsCompleteSection(section) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// ResetSection resets all the tiles in a section
+func (g *Grid) ResetSection(section int) {
+	for _, t := range g.tiles {
+		if t.section == section {
+			t.Reset()
+		}
+	}
 }
 
 // IsComplete returns true if all the tiles are aligned
@@ -154,6 +211,7 @@ func (g *Grid) NextLevel() {
 	for _, t := range g.tiles {
 		t.PlaceCoin()
 	}
+	g.ColorTiles()
 	for _, t := range g.tiles {
 		t.Jumble()
 		t.SetImage()
@@ -199,18 +257,10 @@ func (g *Grid) Draw(gridImage *ebiten.Image) {
 	x, y := g.Size()
 	x = (x / 2) - (w / 2)
 	y = (y / 2) + (h / 2)
-	text.Draw(gridImage, str, acmeLargeFont, x, y, colorBlack)
-
-	// then tell each tile to draw itself on the gridImage
-	var tileColor color.RGBA
-	if g.IsComplete() {
-		tileColor = colorGold
-	} else {
-		tileColor = colorLightSkyBlue
-	}
+	colorTransBlack := color.RGBA{R: 0, G: 0, B: 0, A: 0x10}
+	text.Draw(gridImage, str, acmeLargeFont, x, y, colorTransBlack)
 
 	for _, t := range g.tiles {
-		t.SetColor(tileColor)
 		t.Draw(gridImage)
 	}
 }

@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	backgroundColor     = color.RGBA{R: 0xff, G: 0xe4, B: 0xb5, A: 0xff} // Moccasin
+	backgroundColor     = color.RGBA{R: 0x50, G: 0x50, B: 0x50, A: 0xff}
 	colorNavy           = color.RGBA{R: 0, G: 0, B: 0x80, A: 0xff}
 	colorBlue           = color.RGBA{R: 0, G: 0, B: 0xff, A: 0xff}
 	colorCornflowerBlue = color.RGBA{R: 64, G: 95, B: 0xed, A: 0xff}

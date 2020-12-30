@@ -122,6 +122,7 @@ func init() {
 
 // Tile object describes a tile
 type Tile struct {
+	G          *Grid
 	X, Y       int
 	N, E, S, W *Tile
 
@@ -129,40 +130,66 @@ type Tile struct {
 	currDegrees int
 	targDegrees int
 
-	coins uint
-	color color.RGBA
+	coins   uint
+	section int
+	color   *color.RGBA
 
 	// if currDegrees != targDegrees then tile is lerping/rotating
 	// rotating tile does not receive input
 
 	// TODO section this tile belongs to
-	// TODO color
 	// don't need hammingWeight because graphics not created dynamically
 }
 
 // NewTile creates a new Tile object and returns a pointer to it
-func NewTile(x, y int) *Tile {
-	t := &Tile{X: x, Y: y}
+func NewTile(g *Grid, x, y int) *Tile {
+	t := &Tile{G: g, X: x, Y: y}
 	return t
 }
 
 // Reset prepares a Tile for a new level by resetting just gameplay data, not structural data
 func (t *Tile) Reset() {
 	t.coins = 0
+	t.section = 0
+	t.color = nil
+
+	t.SetImage() // reset to a bkank tile image
 }
 
 // PlaceCoin sets up a random config for this tile
 func (t *Tile) PlaceCoin() {
-	directions := [4]uint{NORTH, EAST, SOUTH, WEST}
-	opposites := [4]uint{SOUTH, WEST, NORTH, EAST}
+	bits := [4]uint{NORTH, EAST, SOUTH, WEST}
+	opps := [4]uint{SOUTH, WEST, NORTH, EAST}
 	links := [4]*Tile{t.N, t.E, t.S, t.W}
 
 	// t.coins = 0
 	for d := 0; d < 4; d++ {
 		if rand.Float64() < 0.25 {
 			if links[d] != nil {
-				t.coins |= directions[d]
-				links[d].coins |= opposites[d]
+				t.coins |= bits[d]
+				links[d].coins |= opps[d]
+			}
+		}
+	}
+}
+
+// ColorConnected assigns color and section to tiles connected (by coinage) to this tile
+func (t *Tile) ColorConnected(color *color.RGBA, section int) {
+	bits := [4]uint{NORTH, EAST, SOUTH, WEST}
+	links := [4]*Tile{t.N, t.E, t.S, t.W}
+
+	if color == nil {
+		panic("nil color")
+	}
+
+	t.color = color
+	t.section = section
+
+	for d := 0; d < 4; d++ {
+		if t.coins&bits[d] != 0 {
+			tn := links[d]
+			if tn != nil && tn.coins != 0 && tn.color == nil {
+				tn.ColorConnected(color, section)
 			}
 		}
 	}
@@ -263,9 +290,36 @@ func (t *Tile) IsComplete() bool {
 	return true
 }
 
-// SetColor sets this tile's color
-func (t *Tile) SetColor(color color.RGBA) {
-	t.color = color
+// IsCompleteSection returns true if the tile aligns properly with it's neighbours
+func (t *Tile) IsCompleteSection(section int) bool {
+	// By design, Go does not support optional parameters, default parameter values, or method overloading.
+	if t.currDegrees != t.targDegrees {
+		return false
+	}
+	if section != t.section {
+		return false
+	}
+	if (t.coins & NORTH) == NORTH {
+		if (t.N == nil) || (t.N.section != section) || ((t.N.coins & SOUTH) == 0) {
+			return false
+		}
+	}
+	if (t.coins & EAST) == EAST {
+		if (t.E == nil) || (t.E.section != section) || ((t.E.coins & WEST) == 0) {
+			return false
+		}
+	}
+	if (t.coins & SOUTH) == SOUTH {
+		if (t.S == nil) || (t.S.section != section) || ((t.S.coins & NORTH) == 0) {
+			return false
+		}
+	}
+	if (t.coins & WEST) == WEST {
+		if (t.W == nil) || (t.W.section != section) || ((t.W.coins & EAST) == 0) {
+			return false
+		}
+	}
+	return true
 }
 
 // Update the tile state (transitions, user input)
@@ -278,6 +332,10 @@ func (t *Tile) Update() error {
 		}
 		if t.currDegrees == t.targDegrees {
 			t.SetImage()
+			if t.G.IsSectionComplete(t.section) {
+				// println("section complete", t.section)
+				t.G.ResetSection(t.section)
+			}
 			// println("rotated", t.X, t.Y, "complete", t.IsComplete())
 		}
 	}
@@ -300,11 +358,13 @@ func (t *Tile) Draw(gridImage *ebiten.Image) error {
 	}
 
 	// Reset RGB (not Alpha) 0 forcibly
-	op.ColorM.Scale(0, 0, 0, 1)
-	r := float64(t.color.R) / 0xff
-	g := float64(t.color.G) / 0xff
-	b := float64(t.color.B) / 0xff
-	op.ColorM.Translate(r, g, b, 0)
+	if t.color != nil {
+		op.ColorM.Scale(0, 0, 0, 1)
+		r := float64(t.color.R) / 0xff
+		g := float64(t.color.G) / 0xff
+		b := float64(t.color.B) / 0xff
+		op.ColorM.Translate(r, g, b, 0)
+	}
 
 	x := t.X * TileWidth
 	y := t.Y * TileHeight

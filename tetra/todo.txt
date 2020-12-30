@@ -1,10 +1,13 @@
+Is Tetra a puzzle or is it bubble-wrap?
+If it's bubble-wrap, then it has colored sections which disappear when complete.
+
 (A) Save level state (where?)
 (A) Scale tiles to fit window
 (B) Clean tilesheet.png
 (B) endcaps?
 (B) expand colors.go
 (B) color palette
-(C) sections?
+(C) sections
 (B) Sound
 
 X (A) Cleanly tick over to NextLevel when something IsComplete after mouse in Grid.Update

@@ -10,8 +10,8 @@ import (
 
 // ScreenWidth and ScreenHeight are exported to main.go for ebiten.SetWindowSize()
 const (
-	boardWidth  = 6
-	boardHeight = 9
+	boardWidth  = 4
+	boardHeight = 5
 )
 
 // Puzzle represents a game state.
