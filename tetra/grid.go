@@ -29,7 +29,7 @@ func init() {
 		log.Fatal(err)
 	}
 	acmeLargeFont = truetype.NewFace(tt, &truetype.Options{
-		Size:    144,
+		Size:    256,
 		DPI:     72,
 		Hinting: font.HintingFull,
 	})
@@ -41,7 +41,7 @@ type Grid struct {
 	height int
 	tiles  []*Tile       // a slice (not array!) of pointers to Tile objects
 	colors []*color.RGBA // a slice of pointers to colors for the tiles, one color per section
-	level  int
+	ud     *UserData
 }
 
 func (g *Grid) findTile(x, y int) *Tile {
@@ -110,14 +110,17 @@ func NewGrid(w, h int) (*Grid, error) {
 	*/
 
 	g.colors = []*color.RGBA{
-		&colorNavy,
-		&colorBlue,
+		&colorRoyalBlue,
+		&colorSteelBlue,
 		&colorCornflowerBlue,
-		&colorLightSkyBlue,
+		&colorSkyBlue,
+		&colorLightSteelBlue,
+		&colorLightBlue,
 	} // golang gotcha no newline after last literal, must be comma or closing brace
 
-	// TODO load level from saved state
-	g.level = 0
+	g.ud = NewUserData()
+	// NextLevel will bump the UserData.Level, which isn't what we want, so
+	g.ud.Level--
 	g.NextLevel()
 
 	return g, nil
@@ -180,13 +183,13 @@ func (g *Grid) IsSectionComplete(section int) bool {
 }
 
 // TriggerScaleDown starts the tile disappear process
-func (g *Grid) TriggerScaleDown(section int) {
-	for _, t := range g.tiles {
-		if t.section == section {
-			t.targScale = 0.1
-		}
-	}
-}
+// func (g *Grid) TriggerScaleDown(section int) {
+// 	for _, t := range g.tiles {
+// 		if t.section == section {
+// 			t.targScale = 0.1
+// 		}
+// 	}
+// }
 
 // FilterSection applies a Tile function to all tiles in the section
 func (g *Grid) FilterSection(f func(*Tile), section int) {
@@ -213,8 +216,9 @@ func (g *Grid) NextLevel() {
 		t.Reset()
 	}
 
-	g.level++
-	rand.Seed(int64(g.level))
+	g.ud.Level++
+	g.ud.Save()
+	rand.Seed(int64(g.ud.Level))
 
 	for _, t := range g.tiles {
 		t.PlaceCoin()
@@ -258,7 +262,7 @@ func (g *Grid) Draw(gridImage *ebiten.Image) {
 	// display the background
 	gridImage.Fill(backgroundColor)
 
-	str := fmt.Sprint(g.level)
+	str := fmt.Sprint(g.ud.Level)
 	bound, _ := font.BoundString(acmeLargeFont, str)
 	w := (bound.Max.X - bound.Min.X).Ceil()
 	h := (bound.Max.Y - bound.Min.Y).Ceil()

@@ -1,10 +1,10 @@
 Is Tetra a puzzle or is it bubble-wrap?
 If it's bubble-wrap, then it has colored sections which disappear when complete.
 
-(A) Save level state (where?)
 (A) Scale tiles to fit window
+(B) Save level state in a better place, currently it gets dumped in Home/Tetra?
 (B) tilesheet with endcaps in overspill margin
-(B) expand colors.go
+(B) expand colors.go to all web colors (will be useful one day)
 (B) color palette
 (B) Sound
 (C) opening menu to choose between puzzle (no sections) and bubble wrap

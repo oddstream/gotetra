@@ -36,8 +36,8 @@ var (
 		EAST:                        {1, -90},
 		SOUTH:                       {1, 0},
 		WEST:                        {1, 90},
-		NORTH | SOUTH:               {2, 0},
-		EAST | WEST:                 {2, 90},
+		NORTH | SOUTH:               {2, 90},
+		EAST | WEST:                 {2, 0},
 		NORTH | EAST | WEST | SOUTH: {3, 0},
 		NORTH | EAST | SOUTH:        {4, 90},
 		EAST | SOUTH | WEST:         {4, 180},
@@ -60,22 +60,23 @@ func getSubImageAndScaleDown(tilesheetImage *ebiten.Image, rect image.Rectangle)
 
 	subImage := tilesheetImage.SubImage(rect).(*ebiten.Image)
 
+	// each subImage is 400x400, but it need to appear to be 300x300 when scaled into a 100x100 tile
 	scaledImage := ebiten.NewImage(TileWidth, TileHeight)
 	op := &ebiten.DrawImageOptions{}
-	scaleX := float64(TileWidth) / float64(300)
-	scaleY := float64(TileHeight) / float64(300)
+	scaleX := float64(TileWidth) / 400.0
+	scaleY := float64(TileHeight) / 400.0
 	op.GeoM.Scale(scaleX, scaleY)
+
 	scaledImage.DrawImage(subImage, op)
 
 	return scaledImage
 }
 
 func init() {
-	tilesheetImage, _, err := ebitenutil.NewImageFromFile("assets/tilesheet.png")
+	tilesheetImage, _, err := ebitenutil.NewImageFromFile("assets/tilesheet2.png")
 	if err != nil {
 		log.Fatal(err)
 	}
-	const spriteSize int = 300
 
 	/*
 		0	0, 0	blank
@@ -89,12 +90,12 @@ func init() {
 	*/
 
 	spriteMapRects := map[int]image.Rectangle{
-		0: image.Rect(0, 0, 300, 300),
-		1: image.Rect(300, 0, 600, 300),
-		2: image.Rect(600, 0, 900, 300),
-		3: image.Rect(0, 300, 300, 600),
-		4: image.Rect(300, 300, 600, 600),
-		5: image.Rect(600, 300, 900, 600),
+		0: image.Rect(0, 0, 400, 400),
+		1: image.Rect(0, 400, 800, 800),
+		2: image.Rect(400, 0, 800, 400),
+		3: image.Rect(800, 400, 1200, 800),
+		4: image.Rect(400, 400, 800, 800),
+		5: image.Rect(800, 0, 1200, 800),
 	}
 
 	tileImages = map[int]*ebiten.Image{
@@ -170,7 +171,7 @@ func (t *Tile) PlaceCoin() {
 
 	// t.coins = 0
 	for d := 0; d < 4; d++ {
-		if rand.Float64() < 0.25 {
+		if rand.Float64() < 0.2 {
 			if links[d] != nil {
 				t.coins |= bits[d]
 				links[d].coins |= opps[d]
@@ -243,21 +244,19 @@ func unshiftBits(num uint) uint {
 
 // Jumble shifts the bits in the tile a random number of times
 func (t *Tile) Jumble() {
-	/*
-		r := rand.Float64()
-		if r < 0.25 {
-			t.coins = shiftBits(t.coins)
-		} else if r < 0.5 {
-			t.coins = unshiftBits(t.coins)
-		} else if r < 0.75 {
-			t.coins = shiftBits(t.coins)
-			t.coins = shiftBits(t.coins)
-		}
-	*/
-	// TODO remove debugging jumble before release
-	if t.coins == NORTH || t.coins == SOUTH {
+	r := rand.Float64()
+	if r < 0.25 {
+		t.coins = shiftBits(t.coins)
+	} else if r < 0.5 {
 		t.coins = unshiftBits(t.coins)
+	} else if r < 0.75 {
+		t.coins = shiftBits(t.coins)
+		t.coins = shiftBits(t.coins)
 	}
+	// TODO remove debugging jumble before release
+	// if t.coins == NORTH || t.coins == SOUTH {
+	// 	t.coins = unshiftBits(t.coins)
+	// }
 }
 
 // Rotate shifts the tile 90 degrees clockwise
@@ -336,6 +335,11 @@ func (t *Tile) IsCompleteSection(section int) bool {
 	return true
 }
 
+// TriggerScaleDown tells this tile to start scaling down
+func (t *Tile) TriggerScaleDown() {
+	t.targScale = 0.1
+}
+
 // Update the tile state (transitions, user input)
 func (t *Tile) Update() error {
 
@@ -351,13 +355,14 @@ func (t *Tile) Update() error {
 		if t.currDegrees == t.targDegrees {
 			t.SetImage()
 			if t.G.IsSectionComplete(t.section) {
-				t.G.TriggerScaleDown(t.section)
+				// t.G.TriggerScaleDown(t.section)
+				t.G.FilterSection((*Tile).TriggerScaleDown, t.section)
 			}
 		}
 	}
 
 	if t.targScale < 1.0 {
-		t.currScale -= 0.01
+		t.currScale -= 0.05
 		if t.currScale <= t.targScale {
 			t.Reset()
 		}
@@ -381,7 +386,8 @@ func (t *Tile) Draw(gridImage *ebiten.Image) error {
 
 	// Reset RGB (not Alpha) forcibly
 	if t.color != nil {
-		op.ColorM.Scale(0, 0, 0, 1)
+		op.ColorM.Scale(0, 0, 0, t.currScale)
+		// op.ColorM.Scale(0, 0, 0, 1)
 		r := float64(t.color.R) / 0xff
 		g := float64(t.color.G) / 0xff
 		b := float64(t.color.B) / 0xff
@@ -398,8 +404,10 @@ func (t *Tile) Draw(gridImage *ebiten.Image) error {
 		op.GeoM.Scale(t.currScale, t.currScale)
 		// x -= float64(TileWidth) * (1.0 - t.currScale)
 		// y -= float64(TileHeight/2)*(1.0-t.currScale) + float64(TileHeight/2)
-		// TODO fade the alpha too
 	}
+
+	// scale tile image up to allow endcaps to overhang
+	op.GeoM.Scale(400.0/300.0, 400.0/300.0)
 
 	op.GeoM.Translate(float64(x), float64(y))
 

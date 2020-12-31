@@ -38,8 +38,8 @@ func (s *Splash) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHei
 func (s *Splash) Update() error {
 	s.xPos += 20
 	if s.xPos > ScreenWidth {
-		println("change state to puzzle")
-		GSM.Switch(NewPuzzle(4, 5))
+		// println("change state to puzzle")
+		GSM.Switch(NewPuzzle(6, 9))
 	}
 	return nil
 }
