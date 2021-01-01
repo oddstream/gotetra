@@ -13,19 +13,24 @@ import (
 type Splash struct {
 	logoImage  *ebiten.Image
 	xPos, yPos int
+	btnPuzzle  *TextButton
+	btnBubble  *TextButton
 }
 
 // NewSplash creates and initializes a Splash/GameState object
 func NewSplash() *Splash {
 	s := &Splash{}
 	var err error
-	s.logoImage, _, err = ebitenutil.NewImageFromFile("assets/oddstream logo.png")
+	s.logoImage, _, err = ebitenutil.NewImageFromFile("/home/gilbert/Tetra/assets/oddstream logo.png")
 	if err != nil {
 		log.Fatal(err)
 	}
 	sx, sy := s.logoImage.Size()
-	s.xPos = -sx
-	s.yPos = (ScreenHeight - sy) / 2
+	s.xPos = (ScreenWidth - sx) / 2
+	s.yPos = -sy
+
+	s.btnPuzzle = NewTextButton("LITTLE PUZZLES", ScreenWidth/2, 500, Acme.large)
+	s.btnBubble = NewTextButton("BUBBLE WRAP", ScreenWidth/2, 700, Acme.large)
 	return s
 }
 
@@ -36,10 +41,23 @@ func (s *Splash) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHei
 
 // Update updates the current game state.
 func (s *Splash) Update() error {
-	s.xPos += 20
-	if s.xPos > ScreenWidth {
-		// println("change state to puzzle")
-		GSM.Switch(NewPuzzle(6, 9))
+	if s.yPos < 50 {
+		s.yPos += ScreenWidth / ebiten.DefaultTPS
+	}
+	/*
+		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+			_, y := ebiten.CursorPosition()
+			if y < (ScreenHeight / 2) {
+				GSM.Switch(NewPuzzle("puzzle", 4, 7))
+			} else {
+				GSM.Switch(NewPuzzle("bubblewrap", 6, 9))
+			}
+		}
+	*/
+	if s.btnPuzzle.Pushed() {
+		GSM.Switch(NewPuzzle("puzzle", 4, 7))
+	} else if s.btnBubble.Pushed() {
+		GSM.Switch(NewPuzzle("bubblewrap", 6, 9))
 	}
 	return nil
 }
@@ -51,4 +69,11 @@ func (s *Splash) Draw(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(float64(s.xPos), float64(s.yPos))
 	screen.DrawImage(s.logoImage, op)
+
+	s.btnPuzzle.Draw(screen)
+	s.btnBubble.Draw(screen)
+
+	ebitenutil.DrawLine(screen, 0, 500, ScreenWidth, 500, colorBlack)
+	ebitenutil.DrawLine(screen, 0, 700, ScreenWidth, 700, colorBlack)
+
 }

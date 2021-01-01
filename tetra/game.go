@@ -19,6 +19,9 @@ type Game struct {
 // GSM provides global access to the game state manager
 var GSM *GameStateManager = &GameStateManager{}
 
+// Acme provides access to small, normal, large, huge Acme fonts
+var Acme *AcmeFonts = NewAcmeFonts()
+
 // NewGame generates a new Game object.
 func NewGame() (*Game, error) {
 	g := &Game{}

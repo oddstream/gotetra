@@ -15,10 +15,10 @@ type Puzzle struct {
 }
 
 // NewPuzzle creates and initializes a Puzzle/GameState object
-func NewPuzzle(w, h int) *Puzzle {
+func NewPuzzle(mode string, w, h int) *Puzzle {
 	p := &Puzzle{}
 	var err error
-	p.grid, err = NewGrid(w, h)
+	p.grid, err = NewGrid(mode, w, h)
 	if err != nil {
 		log.Fatal(err)
 	}

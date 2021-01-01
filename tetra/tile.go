@@ -73,7 +73,7 @@ func getSubImageAndScaleDown(tilesheetImage *ebiten.Image, rect image.Rectangle)
 }
 
 func init() {
-	tilesheetImage, _, err := ebitenutil.NewImageFromFile("assets/tilesheet2.png")
+	tilesheetImage, _, err := ebitenutil.NewImageFromFile("/home/gilbert/Tetra/assets/tilesheet2.png")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -106,23 +106,6 @@ func init() {
 		4: getSubImageAndScaleDown(tilesheetImage, spriteMapRects[4]),
 		5: getSubImageAndScaleDown(tilesheetImage, spriteMapRects[5]),
 	}
-
-	// bytes, err := ioutil.ReadFile("assets/Acme-Regular.ttf")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// // https://pkg.go.dev/golang.org/x/image@v0.0.0-20201208152932-35266b937fa6/font
-	// tt, err := truetype.Parse(bytes)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// mplusNormalFont = truetype.NewFace(tt, &truetype.Options{
-	// 	Size:    24,
-	// 	DPI:     72,
-	// 	Hinting: font.HintingFull,
-	// })
-
-	// println("Tile.init")
 }
 
 // Tile object describes a tile
@@ -380,7 +363,7 @@ func (t *Tile) Draw(gridImage *ebiten.Image) error {
 
 	if t.currDegrees != 0 {
 		op.GeoM.Translate(-float64(TileWidth)/2.0, -float64(TileHeight)/2.0)
-		op.GeoM.Rotate(float64(float64(t.currDegrees) * 3.1415926 / float64(180)))
+		op.GeoM.Rotate(float64(float64(t.currDegrees) * 3.1415926535 / float64(180)))
 		op.GeoM.Translate(float64(TileWidth)/2.0, float64(TileHeight)/2.0)
 	}
 
@@ -392,31 +375,42 @@ func (t *Tile) Draw(gridImage *ebiten.Image) error {
 		g := float64(t.color.G) / 0xff
 		b := float64(t.color.B) / 0xff
 		op.ColorM.Translate(r, g, b, 0)
+		// op.CompositeMode = ebiten.CompositeModeLighter
 	}
 
 	x := float64(t.X * TileWidth)
 	y := float64(t.Y * TileHeight)
 
-	if t.currScale > t.targScale {
-		// TODO understand why this works
-		x += float64(TileWidth/2) * (1.0 - t.currScale)
-		y += float64(TileHeight/2) * (1.0 - t.currScale)
-		op.GeoM.Scale(t.currScale, t.currScale)
-		// x -= float64(TileWidth) * (1.0 - t.currScale)
-		// y -= float64(TileHeight/2)*(1.0-t.currScale) + float64(TileHeight/2)
-	}
+	/*
+		if t.currScale > t.targScale {
+			// TODO understand why this works/doesn't work
+			// it keeps the tile stable, but the shapes go up to the left
+			x += float64(TileWidth/2) * (1.0 - t.currScale)
+			y += float64(TileHeight/2) * (1.0 - t.currScale)
+			op.GeoM.Scale(t.currScale, t.currScale)
+			x -= float64(TileWidth/2) * (1.0 - t.currScale)
+			y -= float64(TileHeight/2) * (1.0 - t.currScale)
+		}
+	*/
 
+	// first move the origin to the center of the tile
+	op.GeoM.Translate(-float64(TileWidth/2), -float64(TileHeight/2))
 	// scale tile image up to allow endcaps to overhang
 	op.GeoM.Scale(400.0/300.0, 400.0/300.0)
+	// then move the origin back to top left
+	op.GeoM.Translate(float64(TileWidth/2), float64(TileHeight/2))
 
 	op.GeoM.Translate(float64(x), float64(y))
 
+	if t.X%2 == 0 && t.Y%2 == 0 {
+		colorTransBlack := color.RGBA{R: 0, G: 0, B: 0, A: 0x10}
+		ebitenutil.DrawRect(gridImage, float64(x), float64(y), float64(TileWidth), float64(TileHeight), colorTransBlack)
+	}
 	gridImage.DrawImage(t.tileImage, op)
 
 	// if t.coins != 0 {
 	// 	str := fmt.Sprintf("%04b", t.coins)
-	// 	f := mplusNormalFont
-	// 	bound, _ := font.BoundString(f, str)
+	// 	bound, _ := font.BoundString(Acme.small, str)
 	// 	w := (bound.Max.X - bound.Min.X).Ceil()
 	// 	h := (bound.Max.Y - bound.Min.Y).Ceil()
 	// 	x = x + (TileWidth-w)/2
@@ -427,7 +421,7 @@ func (t *Tile) Draw(gridImage *ebiten.Image) error {
 	// 	} else {
 	// 		c = colorTeal
 	// 	}
-	// 	text.Draw(gridImage, str, f, x, y, c)
+	// 	text.Draw(gridImage, str, Acme.small, x, y, c)
 	// }
 
 	return nil

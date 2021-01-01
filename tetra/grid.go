@@ -5,38 +5,18 @@ package tetra
 import (
 	"fmt"
 	"image/color"
-	"io/ioutil"
 	"log"
 	"math/rand"
 
-	"github.com/golang/freetype/truetype"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
 )
 
-var acmeLargeFont font.Face
-
-func init() {
-	bytes, err := ioutil.ReadFile("assets/Acme-Regular.ttf")
-	if err != nil {
-		log.Fatal(err)
-	}
-	// https://pkg.go.dev/golang.org/x/image@v0.0.0-20201208152932-35266b937fa6/font
-	tt, err := truetype.Parse(bytes)
-	if err != nil {
-		log.Fatal(err)
-	}
-	acmeLargeFont = truetype.NewFace(tt, &truetype.Options{
-		Size:    256,
-		DPI:     72,
-		Hinting: font.HintingFull,
-	})
-}
-
 // Grid is an object representing the grid of tiles
 type Grid struct {
+	mode   string // "bubblewrap" | "puzzle"
 	width  int
 	height int
 	tiles  []*Tile       // a slice (not array!) of pointers to Tile objects
@@ -65,8 +45,8 @@ func (g *Grid) findTile(x, y int) *Tile {
 }
 
 // NewGrid create a Grid object
-func NewGrid(w, h int) (*Grid, error) {
-	g := &Grid{width: w, height: h, tiles: make([]*Tile, w*h)}
+func NewGrid(m string, w, h int) (*Grid, error) {
+	g := &Grid{mode: m, width: w, height: h, tiles: make([]*Tile, w*h)}
 	for i := range g.tiles {
 		g.tiles[i] = NewTile(g, i%w, i/w)
 	}
@@ -81,33 +61,6 @@ func NewGrid(w, h int) (*Grid, error) {
 		t.S = g.findTile(x, y+1)
 		t.W = g.findTile(x-1, y)
 	}
-
-	/*
-		t00 := g.findTile(0, 0)
-		if t00 == nil {
-			log.Fatal("cannot find t00")
-		}
-		t10 := g.findTile(1, 0)
-		if t10 == nil {
-			log.Fatal("cannot find t10")
-		}
-		if t00.E != t10 {
-			log.Fatal("t00 t10 not linked")
-		}
-		if t10.W != t00 {
-			log.Fatal("t10 t0 not linked")
-		}
-		t01 := g.findTile(0, 1)
-		if t01 == nil {
-			log.Fatal("cannot find t01")
-		}
-		if t00.S != t01 {
-			log.Fatal("t00 t01 not linked")
-		}
-		if t00.S.N != t00 {
-			log.Fatal("t00.S.N not linked")
-		}
-	*/
 
 	g.colors = []*color.RGBA{
 		&colorRoyalBlue,
@@ -153,20 +106,30 @@ func (g *Grid) findUnsectionedTile() *Tile {
 
 // ColorTiles sets the color and section for every tile
 func (g *Grid) ColorTiles() {
-	nextColor := 0
-	nextSection := 0
-	tile := g.findUnsectionedTile()
-	if tile == nil {
-		panic("no first unsection tile")
-	}
-	for tile != nil {
-		tile.ColorConnected(g.colors[nextColor], nextSection)
-		nextColor++
-		if nextColor >= len(g.colors) {
-			nextColor = 0
+	switch g.mode {
+	case "bubblewrap":
+		nextColor := 0
+		nextSection := 0
+		tile := g.findUnsectionedTile()
+		if tile == nil {
+			panic("no first unsection tile")
 		}
-		nextSection++
-		tile = g.findUnsectionedTile()
+		for tile != nil {
+			tile.ColorConnected(g.colors[nextColor], nextSection)
+			nextColor++
+			if nextColor >= len(g.colors) {
+				nextColor = 0
+			}
+			nextSection++
+			tile = g.findUnsectionedTile()
+		}
+	case "puzzle":
+		for _, t := range g.tiles {
+			t.section = 0 // any number will do
+			t.color = g.colors[g.ud.Level%len(g.colors)]
+		}
+	default:
+		log.Fatal("unknown mode", g.mode)
 	}
 }
 
@@ -263,14 +226,14 @@ func (g *Grid) Draw(gridImage *ebiten.Image) {
 	gridImage.Fill(backgroundColor)
 
 	str := fmt.Sprint(g.ud.Level)
-	bound, _ := font.BoundString(acmeLargeFont, str)
+	bound, _ := font.BoundString(Acme.huge, str)
 	w := (bound.Max.X - bound.Min.X).Ceil()
 	h := (bound.Max.Y - bound.Min.Y).Ceil()
 	x, y := g.Size()
 	x = (x / 2) - (w / 2)
 	y = (y / 2) + (h / 2)
 	colorTransBlack := color.RGBA{R: 0, G: 0, B: 0, A: 0x10}
-	text.Draw(gridImage, str, acmeLargeFont, x, y, colorTransBlack)
+	text.Draw(gridImage, str, Acme.huge, x, y, colorTransBlack)
 
 	for _, t := range g.tiles {
 		t.Draw(gridImage)

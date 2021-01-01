@@ -12,13 +12,14 @@ const fname string = "tetra.json"
 
 // UserData contains the level the user is on
 type UserData struct {
-	Level int
+	Copyright string
+	Level     int
 }
 
 // NewUserData create a new UserData object and tries to load it's content from file
 // it always returns an object, even if file does not exist
 func NewUserData() *UserData {
-	ud := &UserData{Level: 1}
+	ud := &UserData{Copyright: "Copyright ©️ 2020 oddstream.games", Level: 1}
 
 	file, err := os.Open(fname)
 	if err == nil && file != nil {
@@ -53,9 +54,8 @@ func (ud *UserData) Save() {
 	}
 	defer file.Close()
 
-	bytesWritten, err := file.Write(bytes)
+	_, err = file.Write(bytes)
 	if err != nil {
 		log.Fatal(err)
 	}
-	println("Wrote bytes", bytesWritten)
 }
