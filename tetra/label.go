@@ -46,6 +46,6 @@ func (tb *Label) Update() error {
 // Draw handles rendering of Label object
 func (tb *Label) Draw(screen *ebiten.Image) {
 
-	text.Draw(screen, tb.text, tb.font, tb.xOrigin, tb.yOrigin+tb.height, colorWhite)
+	text.Draw(screen, tb.text, tb.font, tb.xOrigin, tb.yOrigin+tb.height, BasicColors["White"])
 
 }

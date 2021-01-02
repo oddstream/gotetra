@@ -38,9 +38,9 @@ func NewSplash() *Splash {
 
 	s.widgets = []Drawable{
 		NewLabel("Do you prefer", ScreenWidth/2, 400, Acme.normal),
-		NewTextButton("LITTLE PUZZLES", ScreenWidth/2, 500, Acme.large, func() { GSM.Switch(NewPuzzle("puzzle", 6, 9)) }),
+		NewTextButton("LITTLE PUZZLES", ScreenWidth/2, 500, Acme.large, func() { GSM.Switch(NewPuzzle("puzzle", 4, 5)) }),
 		NewLabel("or", ScreenWidth/2, 600, Acme.normal),
-		NewTextButton("BUBBLE WRAP", ScreenWidth/2, 700, Acme.large, func() { GSM.Switch(NewPuzzle("bubblewrap", 6, 9)) }),
+		NewTextButton("BUBBLE WRAP", ScreenWidth/2, 700, Acme.large, func() { GSM.Switch(NewPuzzle("bubblewrap", 4, 5)) }),
 	}
 	return s
 }
@@ -78,6 +78,6 @@ func (s *Splash) Draw(screen *ebiten.Image) {
 		d.Draw(screen)
 	}
 
-	ebitenutil.DrawLine(screen, 0, 500, ScreenWidth, 500, colorBlack)
-	ebitenutil.DrawLine(screen, 0, 700, ScreenWidth, 700, colorBlack)
+	ebitenutil.DrawLine(screen, 0, 500, ScreenWidth, 500, BasicColors["Black"])
+	ebitenutil.DrawLine(screen, 0, 700, ScreenWidth, 700, BasicColors["Black"])
 }

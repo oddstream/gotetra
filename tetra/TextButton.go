@@ -59,7 +59,7 @@ func (tb *TextButton) Update() error {
 func (tb *TextButton) Draw(screen *ebiten.Image) {
 
 	bgImage := ebiten.NewImage(tb.width, tb.height)
-	bgImage.Fill(colorBlack)
+	bgImage.Fill(BasicColors["Black"])
 	op := &ebiten.DrawImageOptions{}
 	{
 		op.GeoM.Translate(-float64(tb.width)/2.0, -float64(tb.height)/2.0)
@@ -69,6 +69,6 @@ func (tb *TextButton) Draw(screen *ebiten.Image) {
 	op.GeoM.Translate(float64(tb.xOrigin), float64(tb.yOrigin))
 	screen.DrawImage(bgImage, op)
 
-	text.Draw(screen, tb.text, tb.font, tb.xOrigin, tb.yOrigin+tb.height, colorWhite)
+	text.Draw(screen, tb.text, tb.font, tb.xOrigin, tb.yOrigin+tb.height, BasicColors["White"])
 
 }

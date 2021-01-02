@@ -18,6 +18,7 @@ type Spore struct {
 	xCenter, yCenter float64
 	dX, dY           float64       // direction
 	rot              float64       // rotation
+	rotVel           float64       // rotational velocy (-1, 0 or +1)
 	img              *ebiten.Image // image, scaled and colored
 }
 
@@ -25,6 +26,8 @@ type Spore struct {
 func NewSpore(x, y int, imgSrc *ebiten.Image, currDegrees float64, c color.RGBA) *Spore {
 	sp := &Spore{xCenter: float64(x), yCenter: float64(y), rot: currDegrees}
 
+	values := []float64{-1.0, 0.0, 1.0}
+	sp.rotVel = values[rand.Intn(len(values))]
 	sp.dX = (rand.Float64() - 0.5)
 	sp.dY = (rand.Float64() - 0.5)
 
@@ -57,7 +60,7 @@ func (sp *Spore) Update() error {
 	sp.xCenter += sp.dX
 	sp.yCenter += sp.dY
 
-	sp.rot += float64(rand.Intn(2))
+	sp.rot += sp.rotVel
 	if sp.rot >= 360 {
 		sp.rot = 0
 	}

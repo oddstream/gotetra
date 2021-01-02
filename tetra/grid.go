@@ -17,13 +17,14 @@ import (
 
 // Grid is an object representing the grid of tiles
 type Grid struct {
-	mode   string // "bubblewrap" | "puzzle"
-	width  int
-	height int
-	tiles  []*Tile       // a slice (not array!) of pointers to Tile objects
-	colors []*color.RGBA // a slice of pointers to colors for the tiles, one color per section
-	ud     *UserData
-	spores []*Spore
+	mode    string // "bubblewrap" | "puzzle"
+	width   int
+	height  int
+	tiles   []*Tile // a slice (not array!) of pointers to Tile objects
+	palette Palette
+	colors  []*color.RGBA // a slice of pointers to colors for the tiles, one color per section
+	ud      *UserData
+	spores  []*Spore
 }
 
 func (g *Grid) findTile(x, y int) *Tile {
@@ -64,15 +65,6 @@ func NewGrid(m string, w, h int) (*Grid, error) {
 		t.W = g.findTile(x-1, y)
 	}
 
-	g.colors = []*color.RGBA{
-		&colorRoyalBlue,
-		&colorSteelBlue,
-		&colorCornflowerBlue,
-		&colorSkyBlue,
-		&colorLightSteelBlue,
-		&colorLightBlue,
-	} // golang gotcha no newline after last literal, must be comma or closing brace
-
 	g.ud = NewUserData()
 	// NextLevel will bump the UserData.Level, which isn't what we want, so
 	g.ud.Level--
@@ -101,7 +93,7 @@ func (g *Grid) FindTileAt(x, y int) *Tile {
 
 func (g *Grid) findUnsectionedTile() *Tile {
 	for _, t := range g.tiles {
-		if t.coins != 0 && t.color == nil {
+		if t.coins != 0 && t.color == BasicColors["Black"] {
 			return t
 		}
 	}
@@ -119,9 +111,9 @@ func (g *Grid) ColorTiles() {
 			panic("no first unsection tile")
 		}
 		for tile != nil {
-			tile.ColorConnected(g.colors[nextColor], nextSection)
+			tile.ColorConnected(g.palette[nextColor], nextSection)
 			nextColor++
-			if nextColor >= len(g.colors) {
+			if nextColor == len(g.palette) {
 				nextColor = 0
 			}
 			nextSection++
@@ -130,7 +122,11 @@ func (g *Grid) ColorTiles() {
 	case "puzzle":
 		for _, t := range g.tiles {
 			t.section = 0 // any number will do
-			t.color = g.colors[g.ud.Level%len(g.colors)]
+			{
+				n := g.ud.Level % len(g.palette)
+				colName := g.palette[n]
+				t.color = ExtendedColors[colName]
+			}
 		}
 	default:
 		log.Fatal("unknown mode", g.mode)
@@ -190,6 +186,7 @@ func (g *Grid) NextLevel() {
 	for _, t := range g.tiles {
 		t.PlaceCoin()
 	}
+	g.palette = Palettes[rand.Int()%len(Palettes)]
 	g.ColorTiles()
 	for _, t := range g.tiles {
 		t.Jumble()

@@ -3,6 +3,7 @@
 package tetra
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"log"
@@ -138,7 +139,7 @@ type Tile struct {
 	state       TileState
 	coins       uint
 	section     int
-	color       *color.RGBA
+	color       color.RGBA
 
 	// rotating, shrinking and growing tiles do not receive input
 	// don't need hammingWeight because graphics not created dynamically
@@ -155,7 +156,7 @@ func NewTile(g *Grid, x, y int) *Tile {
 func (t *Tile) Reset() {
 	t.coins = 0
 	t.section = 0
-	t.color = nil
+	t.color = BasicColors["Black"]
 	t.SetImage() // reset to a blank tile image
 }
 
@@ -177,22 +178,20 @@ func (t *Tile) PlaceCoin() {
 }
 
 // ColorConnected assigns color and section to tiles connected (by coinage) to this tile
-func (t *Tile) ColorConnected(color *color.RGBA, section int) {
+func (t *Tile) ColorConnected(colorName string, section int) {
+	// println(colorName, ExtendedColors[colorName].R, ExtendedColors[colorName].G, ExtendedColors[colorName].B)
 	bits := [4]uint{NORTH, EAST, SOUTH, WEST}
 	links := [4]*Tile{t.N, t.E, t.S, t.W}
 
-	if color == nil {
-		panic("nil color")
-	}
-
-	t.color = color
+	t.color = ExtendedColors[colorName]
 	t.section = section
 
 	for d := 0; d < 4; d++ {
 		if t.coins&bits[d] != 0 {
 			tn := links[d]
-			if tn != nil && tn.coins != 0 && tn.color == nil {
-				tn.ColorConnected(color, section)
+			// unconnected tiles will have coins 0 and not have been colored (ie still be black)
+			if tn != nil && tn.coins != 0 && tn.color == BasicColors["Black"] {
+				tn.ColorConnected(colorName, section)
 			}
 		}
 	}
@@ -385,7 +384,7 @@ func (t *Tile) Update() error {
 			}
 		}
 	case TileShrunk:
-		t.G.AddSpore(t.X, t.Y, t.tileImage, t.currDegrees, *t.color)
+		t.G.AddSpore(t.X, t.Y, t.tileImage, t.currDegrees, t.color)
 		t.Reset()
 	}
 
@@ -400,9 +399,9 @@ func (t *Tile) debugText(gridImage *ebiten.Image, str string, x, y float64) {
 	ty := int(y) + (TileHeight-h)/2 + h
 	var c color.Color
 	if t.IsComplete() {
-		c = colorGold
+		c = BasicColors["Fushia"]
 	} else {
-		c = colorTeal
+		c = BasicColors["Purple"]
 	}
 	text.Draw(gridImage, str, Acme.small, tx, ty, c)
 }
@@ -424,8 +423,8 @@ func (t *Tile) Draw(gridImage *ebiten.Image) {
 	}
 
 	// Reset RGB (not Alpha) forcibly
-	// TODO why would color be nil!?
-	if t.color != nil {
+	// TODO why check!?
+	if t.color != BasicColors["Black"] {
 		// reducing alpha leaves the endcaps doubled
 		op.ColorM.Scale(0, 0, 0, t.scale)
 		// op.ColorM.Scale(0, 0, 0, 1)
@@ -462,6 +461,6 @@ func (t *Tile) Draw(gridImage *ebiten.Image) {
 	}
 	gridImage.DrawImage(t.tileImage, op)
 
-	// t.debugText(gridImage, fmt.Sprint(t.state), x, y)
+	t.debugText(gridImage, fmt.Sprint(t.state), x, y)
 	// t.debugText(gridImage, fmt.Sprintf("%04b", t.coins), x, y)
 }
