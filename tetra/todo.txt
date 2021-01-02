@@ -1,21 +1,24 @@
 Is Tetra a puzzle or is it bubble-wrap?
 If it's bubble-wrap, then it has colored sections which disappear when complete.
 
-(A) the mouse point his testing on the tiles is off to the left, draw some rects
-(A) Input object that records mouse/touch state and has func Pushed() bool so things are triggered on mouse/touch up
-(A) Generic interface for UI components (Button, Label)
-(A) TextButton(text, font, command) class, font.BoundString()
-(A) location/storage of assets
-(A) Scale tiles to fit window
-(B) Save level state in a better place, currently it gets dumped in Home/Tetra?
-(B) expand colors.go to all web colors (will be useful one day)
-(B) color palette
-(B) Sound
+Only Update returns an error, NOT Draw or Layout
+Input object that records mouse/touch state and has func Pushed() bool so things are triggered on mouse/touch up
+Spores (map of Spore objects in Grid)
+Generic interface for UI components (Button, Label)
+location/storage of assets
+Scale tiles to fit window
+Save level state in a better place, currently it gets dumped in Home/Tetra?
+expand colors.go to all web colors (will be useful one day)
+color palette
+Sound
 
-(C) opening menu "do you prefer" "little puzzles" (no sections) or "bubble wrap"?
-(A) Separate Font.go (see 2048/tile.go)
-x (B) tilesheet with endcaps in overspill margin
-x (A) transition scale down of tile removal
-X (A) Cleanly tick over to NextLevel when something IsComplete after mouse in Grid.Update
-X (B) display level
-X sections
+x BUG Can click on a shrinking tile
+x TextButton(text, font, command) class, font.BoundString()
+x opening menu "do you prefer" "little puzzles" (no sections) or "bubble wrap"?
+x BUG the mouse point his testing on the tiles is off to the left, draw some rects
+x Separate Font.go (see 2048/tile.go)
+x tilesheet with endcaps in overspill margin
+x transition scale down of tile removal
+x Cleanly tick over to NextLevel when something IsComplete after mouse in Grid.Update
+x display level
+x sections

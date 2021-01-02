@@ -9,12 +9,19 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
+// Drawable type implements UpDate, Draw and Pushed
+type Drawable interface {
+	Update() error
+	Draw(*ebiten.Image)
+	Pushed() bool
+	Action()
+}
+
 // Splash represents a game state.
 type Splash struct {
 	logoImage  *ebiten.Image
 	xPos, yPos int
-	btnPuzzle  *TextButton
-	btnBubble  *TextButton
+	widgets    []Drawable
 }
 
 // NewSplash creates and initializes a Splash/GameState object
@@ -29,8 +36,12 @@ func NewSplash() *Splash {
 	s.xPos = (ScreenWidth - sx) / 2
 	s.yPos = -sy
 
-	s.btnPuzzle = NewTextButton("LITTLE PUZZLES", ScreenWidth/2, 500, Acme.large)
-	s.btnBubble = NewTextButton("BUBBLE WRAP", ScreenWidth/2, 700, Acme.large)
+	s.widgets = []Drawable{
+		NewLabel("Do you prefer", ScreenWidth/2, 400, Acme.normal),
+		NewTextButton("LITTLE PUZZLES", ScreenWidth/2, 500, Acme.large, func() { GSM.Switch(NewPuzzle("puzzle", 6, 9)) }),
+		NewLabel("or", ScreenWidth/2, 600, Acme.normal),
+		NewTextButton("BUBBLE WRAP", ScreenWidth/2, 700, Acme.large, func() { GSM.Switch(NewPuzzle("bubblewrap", 6, 9)) }),
+	}
 	return s
 }
 
@@ -44,21 +55,14 @@ func (s *Splash) Update() error {
 	if s.yPos < 50 {
 		s.yPos += ScreenWidth / ebiten.DefaultTPS
 	}
-	/*
-		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-			_, y := ebiten.CursorPosition()
-			if y < (ScreenHeight / 2) {
-				GSM.Switch(NewPuzzle("puzzle", 4, 7))
-			} else {
-				GSM.Switch(NewPuzzle("bubblewrap", 6, 9))
-			}
+
+	for _, w := range s.widgets {
+		if w.Pushed() {
+			w.Action()
+			break
 		}
-	*/
-	if s.btnPuzzle.Pushed() {
-		GSM.Switch(NewPuzzle("puzzle", 4, 7))
-	} else if s.btnBubble.Pushed() {
-		GSM.Switch(NewPuzzle("bubblewrap", 6, 9))
 	}
+
 	return nil
 }
 
@@ -70,10 +74,10 @@ func (s *Splash) Draw(screen *ebiten.Image) {
 	op.GeoM.Translate(float64(s.xPos), float64(s.yPos))
 	screen.DrawImage(s.logoImage, op)
 
-	s.btnPuzzle.Draw(screen)
-	s.btnBubble.Draw(screen)
+	for _, d := range s.widgets {
+		d.Draw(screen)
+	}
 
 	ebitenutil.DrawLine(screen, 0, 500, ScreenWidth, 500, colorBlack)
 	ebitenutil.DrawLine(screen, 0, 700, ScreenWidth, 700, colorBlack)
-
 }

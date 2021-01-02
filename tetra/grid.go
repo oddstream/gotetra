@@ -9,6 +9,7 @@ import (
 	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
@@ -22,6 +23,7 @@ type Grid struct {
 	tiles  []*Tile       // a slice (not array!) of pointers to Tile objects
 	colors []*color.RGBA // a slice of pointers to colors for the tiles, one color per section
 	ud     *UserData
+	spores []*Spore
 }
 
 func (g *Grid) findTile(x, y int) *Tile {
@@ -75,6 +77,8 @@ func NewGrid(m string, w, h int) (*Grid, error) {
 	// NextLevel will bump the UserData.Level, which isn't what we want, so
 	g.ud.Level--
 	g.NextLevel()
+
+	g.spores = make([]*Spore, 0, 32)
 
 	return g, nil
 }
@@ -193,6 +197,16 @@ func (g *Grid) NextLevel() {
 	}
 }
 
+// AddSpore to map of spores
+func (g *Grid) AddSpore(x, y int, img *ebiten.Image, deg int, col color.RGBA) {
+	x *= TileWidth
+	x += TileWidth / 2
+	y *= TileWidth
+	y += TileWidth / 2
+	sp := NewSpore(x, y, img, float64(deg), col)
+	g.spores = append(g.spores, sp)
+}
+
 // Update the board state (transitions, user input)
 func (g *Grid) Update() error {
 	// TODO move input up to puzzle so we can reset at that level (where level is)
@@ -217,6 +231,24 @@ func (g *Grid) Update() error {
 		t.Update()
 	}
 
+	for _, sp := range g.spores {
+		sp.Update()
+	}
+
+	// if len(g.spores) > 16 {
+	// 	g.spores = g.spores[1:]
+	// 	println("trimmed spores")
+	// }
+	{
+		newSpores := make([]*Spore, 0, len(g.spores))
+		for _, sp := range g.spores {
+			if sp.IsVisible() {
+				newSpores = append(newSpores, sp)
+			}
+		}
+		g.spores = newSpores
+	}
+
 	return nil
 }
 
@@ -238,4 +270,9 @@ func (g *Grid) Draw(gridImage *ebiten.Image) {
 	for _, t := range g.tiles {
 		t.Draw(gridImage)
 	}
+
+	for _, sp := range g.spores {
+		sp.Draw(gridImage)
+	}
+	ebitenutil.DebugPrint(gridImage, fmt.Sprintf("%d spores", len(g.spores)))
 }

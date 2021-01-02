@@ -250,6 +250,10 @@ func (t *Tile) Rotate() {
 	if t.currDegrees != t.targDegrees {
 		return
 	}
+	// TODO don't rotate if shrinking
+	if t.currScale > t.targScale {
+		return
+	}
 	t.coins = shiftBits(t.coins)
 	t.targDegrees = t.currDegrees + 90
 	if t.targDegrees >= 360 {
@@ -345,8 +349,9 @@ func (t *Tile) Update() error {
 	}
 
 	if t.targScale < 1.0 {
-		t.currScale -= 0.05
+		t.currScale -= 0.01
 		if t.currScale <= t.targScale {
+			t.G.AddSpore(t.X, t.Y, t.tileImage, t.currDegrees, *t.color)
 			t.Reset()
 		}
 	}
@@ -355,7 +360,7 @@ func (t *Tile) Update() error {
 }
 
 // Draw handles rendering of Tile object
-func (t *Tile) Draw(gridImage *ebiten.Image) error {
+func (t *Tile) Draw(gridImage *ebiten.Image) {
 
 	// scale, point translation, rotate, object translation
 
@@ -368,7 +373,9 @@ func (t *Tile) Draw(gridImage *ebiten.Image) error {
 	}
 
 	// Reset RGB (not Alpha) forcibly
+	// TODO why would color be nil!?
 	if t.color != nil {
+		// reducing alpha leaves the endcaps doubled
 		op.ColorM.Scale(0, 0, 0, t.currScale)
 		// op.ColorM.Scale(0, 0, 0, 1)
 		r := float64(t.color.R) / 0xff
@@ -381,24 +388,23 @@ func (t *Tile) Draw(gridImage *ebiten.Image) error {
 	x := float64(t.X * TileWidth)
 	y := float64(t.Y * TileHeight)
 
-	/*
-		if t.currScale > t.targScale {
-			// TODO understand why this works/doesn't work
-			// it keeps the tile stable, but the shapes go up to the left
-			x += float64(TileWidth/2) * (1.0 - t.currScale)
-			y += float64(TileHeight/2) * (1.0 - t.currScale)
-			op.GeoM.Scale(t.currScale, t.currScale)
-			x -= float64(TileWidth/2) * (1.0 - t.currScale)
-			y -= float64(TileHeight/2) * (1.0 - t.currScale)
-		}
-	*/
+	halfTileWidth := float64(TileWidth / 2)
+	halfTileHeight := float64(TileHeight / 2)
+
+	if t.currScale > t.targScale {
+		// first move the origin to the center of the tile
+		op.GeoM.Translate(-halfTileWidth, -halfTileHeight)
+		op.GeoM.Scale(t.currScale, t.currScale)
+		// then move the origin back to top left
+		op.GeoM.Translate(halfTileWidth, halfTileHeight)
+	}
 
 	// first move the origin to the center of the tile
-	op.GeoM.Translate(-float64(TileWidth/2), -float64(TileHeight/2))
+	op.GeoM.Translate(-halfTileWidth, -halfTileHeight)
 	// scale tile image up to allow endcaps to overhang
-	op.GeoM.Scale(400.0/300.0, 400.0/300.0)
+	op.GeoM.Scale(400.0/300.0, 400.0/300.0) // 1.3333333 creates ugly scaling artifacts; TODO need to change 400x400 tiles to 600x600?
 	// then move the origin back to top left
-	op.GeoM.Translate(float64(TileWidth/2), float64(TileHeight/2))
+	op.GeoM.Translate(halfTileWidth, halfTileHeight)
 
 	op.GeoM.Translate(float64(x), float64(y))
 
@@ -424,5 +430,4 @@ func (t *Tile) Draw(gridImage *ebiten.Image) error {
 	// 	text.Draw(gridImage, str, Acme.small, x, y, c)
 	// }
 
-	return nil
 }
