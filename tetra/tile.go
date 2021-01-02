@@ -10,6 +10,8 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/text"
+	"golang.org/x/image/font"
 )
 
 // TileWidth is the unscaled width of a tile in pixels
@@ -18,6 +20,9 @@ const TileWidth int = 100
 // TileHeight is the unscaled height of a tile in pixels
 const TileHeight int = 100
 
+// MinimumScale is the smallest a shape gets, used when creating and when completed
+const MinimumScale float64 = 0.1
+
 // NORTH is the bit pattern for the upwards direction
 const (
 	NORTH = 0b0001
@@ -25,6 +30,18 @@ const (
 	SOUTH = 0b0100
 	WEST  = 0b1000
 	MASK  = 0b1111
+)
+
+// TileState records what this tile is up to at the moment
+type TileState int
+
+// TileSettled is the state where a full sized tile is not doing anything
+const (
+	TileSettled TileState = iota
+	TileGrowing
+	TileShrinking
+	TileRotating
+	TileShrunk
 )
 
 type imageInfo struct{ img, deg int }
@@ -117,21 +134,18 @@ type Tile struct {
 	tileImage   *ebiten.Image
 	currDegrees int
 	targDegrees int
-	currScale   float64
-	targScale   float64
+	scale       float64
+	state       TileState
 	coins       uint
 	section     int
 	color       *color.RGBA
 
-	// if currDegrees != targDegrees then tile is lerping/rotating
-	// if currScale != targScale then tile is lerping/disappearing
-
-	// rotating tile does not receive input
-
+	// rotating, shrinking and growing tiles do not receive input
 	// don't need hammingWeight because graphics not created dynamically
 }
 
 // NewTile creates a new Tile object and returns a pointer to it
+// all new tiles start in a shrunken state
 func NewTile(g *Grid, x, y int) *Tile {
 	t := &Tile{G: g, X: x, Y: y}
 	return t
@@ -142,7 +156,6 @@ func (t *Tile) Reset() {
 	t.coins = 0
 	t.section = 0
 	t.color = nil
-
 	t.SetImage() // reset to a blank tile image
 }
 
@@ -191,8 +204,13 @@ func (t *Tile) SetImage() {
 	t.tileImage = tileImages[info.img]
 	t.currDegrees = info.deg
 	t.targDegrees = info.deg
-	t.currScale = 1.0
-	t.targScale = 1.0
+	if t.coins == 0 {
+		t.state = TileSettled
+		t.scale = 1.0
+	} else {
+		t.state = TileGrowing
+		t.scale = MinimumScale
+	}
 }
 
 // Rect gives the x,y coords of the tile's top left and bottom right corners, in screen coordinates
@@ -247,25 +265,26 @@ func (t *Tile) Rotate() {
 	if 0 == t.coins {
 		return
 	}
-	if t.currDegrees != t.targDegrees {
+	if t.state != TileSettled {
 		return
 	}
-	// TODO don't rotate if shrinking
-	if t.currScale > t.targScale {
-		return
-	}
+
 	t.coins = shiftBits(t.coins)
 	t.targDegrees = t.currDegrees + 90
 	if t.targDegrees >= 360 {
 		t.targDegrees = 0
 	}
+	t.state = TileRotating
 	// println("rotate", t.X, t.Y, t.coins)
 }
 
 // IsComplete returns true if the tile aligns properly with it's neighbours
 func (t *Tile) IsComplete() bool {
-	if t.currDegrees != t.targDegrees {
+	if t.state != TileSettled {
 		return false
+	}
+	if 0 == t.coins {
+		return true
 	}
 	if (t.coins & NORTH) == NORTH {
 		if (t.N == nil) || ((t.N.coins & SOUTH) == 0) {
@@ -293,8 +312,11 @@ func (t *Tile) IsComplete() bool {
 // IsCompleteSection returns true if the tile aligns properly with it's neighbours
 func (t *Tile) IsCompleteSection(section int) bool {
 	// By design, Go does not support optional parameters, default parameter values, or method overloading.
-	if t.currDegrees != t.targDegrees {
+	if t.state != TileSettled {
 		return false
+	}
+	if 0 == t.coins {
+		return true
 	}
 	if section != t.section {
 		return false
@@ -324,7 +346,9 @@ func (t *Tile) IsCompleteSection(section int) bool {
 
 // TriggerScaleDown tells this tile to start scaling down
 func (t *Tile) TriggerScaleDown() {
-	t.targScale = 0.1
+	if t.coins != 0 {
+		t.state = TileShrinking
+	}
 }
 
 // Update the tile state (transitions, user input)
@@ -334,29 +358,53 @@ func (t *Tile) Update() error {
 		return nil
 	}
 
-	if t.currDegrees != t.targDegrees {
+	switch t.state {
+	case TileSettled:
+	case TileGrowing:
+		t.scale += 0.01
+		if t.scale >= 1.0 {
+			t.scale = 1.0
+			t.state = TileSettled
+		}
+	case TileShrinking:
+		t.scale -= 0.01
+		if t.scale <= MinimumScale {
+			t.scale = MinimumScale
+			t.state = TileShrunk
+		}
+	case TileRotating:
 		t.currDegrees += 5
 		if t.currDegrees >= 360 {
 			t.currDegrees = 0
 		}
 		if t.currDegrees == t.targDegrees {
-			t.SetImage()
+			t.state = TileSettled
+			// t.SetImage()
 			if t.G.IsSectionComplete(t.section) {
-				// t.G.TriggerScaleDown(t.section)
 				t.G.FilterSection((*Tile).TriggerScaleDown, t.section)
 			}
 		}
-	}
-
-	if t.targScale < 1.0 {
-		t.currScale -= 0.01
-		if t.currScale <= t.targScale {
-			t.G.AddSpore(t.X, t.Y, t.tileImage, t.currDegrees, *t.color)
-			t.Reset()
-		}
+	case TileShrunk:
+		t.G.AddSpore(t.X, t.Y, t.tileImage, t.currDegrees, *t.color)
+		t.Reset()
 	}
 
 	return nil
+}
+
+func (t *Tile) debugText(gridImage *ebiten.Image, str string, x, y float64) {
+	bound, _ := font.BoundString(Acme.small, str)
+	w := (bound.Max.X - bound.Min.X).Ceil()
+	h := (bound.Max.Y - bound.Min.Y).Ceil()
+	tx := int(x) + (TileWidth-w)/2
+	ty := int(y) + (TileHeight-h)/2 + h
+	var c color.Color
+	if t.IsComplete() {
+		c = colorGold
+	} else {
+		c = colorTeal
+	}
+	text.Draw(gridImage, str, Acme.small, tx, ty, c)
 }
 
 // Draw handles rendering of Tile object
@@ -364,19 +412,22 @@ func (t *Tile) Draw(gridImage *ebiten.Image) {
 
 	// scale, point translation, rotate, object translation
 
+	halfTileWidth := float64(TileWidth / 2)
+	halfTileHeight := float64(TileHeight / 2)
+
 	op := &ebiten.DrawImageOptions{}
 
 	if t.currDegrees != 0 {
-		op.GeoM.Translate(-float64(TileWidth)/2.0, -float64(TileHeight)/2.0)
-		op.GeoM.Rotate(float64(float64(t.currDegrees) * 3.1415926535 / float64(180)))
-		op.GeoM.Translate(float64(TileWidth)/2.0, float64(TileHeight)/2.0)
+		op.GeoM.Translate(-halfTileWidth, -halfTileHeight)
+		op.GeoM.Rotate(float64(t.currDegrees) * 3.1415926535 / 180.0)
+		op.GeoM.Translate(halfTileWidth, halfTileHeight)
 	}
 
 	// Reset RGB (not Alpha) forcibly
 	// TODO why would color be nil!?
 	if t.color != nil {
 		// reducing alpha leaves the endcaps doubled
-		op.ColorM.Scale(0, 0, 0, t.currScale)
+		op.ColorM.Scale(0, 0, 0, t.scale)
 		// op.ColorM.Scale(0, 0, 0, 1)
 		r := float64(t.color.R) / 0xff
 		g := float64(t.color.G) / 0xff
@@ -388,13 +439,10 @@ func (t *Tile) Draw(gridImage *ebiten.Image) {
 	x := float64(t.X * TileWidth)
 	y := float64(t.Y * TileHeight)
 
-	halfTileWidth := float64(TileWidth / 2)
-	halfTileHeight := float64(TileHeight / 2)
-
-	if t.currScale > t.targScale {
+	if t.state == TileShrinking || t.state == TileGrowing {
 		// first move the origin to the center of the tile
 		op.GeoM.Translate(-halfTileWidth, -halfTileHeight)
-		op.GeoM.Scale(t.currScale, t.currScale)
+		op.GeoM.Scale(t.scale, t.scale)
 		// then move the origin back to top left
 		op.GeoM.Translate(halfTileWidth, halfTileHeight)
 	}
@@ -414,20 +462,6 @@ func (t *Tile) Draw(gridImage *ebiten.Image) {
 	}
 	gridImage.DrawImage(t.tileImage, op)
 
-	// if t.coins != 0 {
-	// 	str := fmt.Sprintf("%04b", t.coins)
-	// 	bound, _ := font.BoundString(Acme.small, str)
-	// 	w := (bound.Max.X - bound.Min.X).Ceil()
-	// 	h := (bound.Max.Y - bound.Min.Y).Ceil()
-	// 	x = x + (TileWidth-w)/2
-	// 	y = y + (TileHeight-h)/2 + h
-	// 	var c color.Color
-	// 	if t.IsComplete() {
-	// 		c = colorGold
-	// 	} else {
-	// 		c = colorTeal
-	// 	}
-	// 	text.Draw(gridImage, str, Acme.small, x, y, c)
-	// }
-
+	// t.debugText(gridImage, fmt.Sprint(t.state), x, y)
+	// t.debugText(gridImage, fmt.Sprintf("%04b", t.coins), x, y)
 }

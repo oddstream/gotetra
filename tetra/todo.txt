@@ -2,8 +2,10 @@ Is Tetra a puzzle or is it bubble-wrap?
 If it's bubble-wrap, then it has colored sections which disappear when complete.
 
 Only Update returns an error, NOT Draw or Layout
+Boid's use of Vector2D
+Spores should maybe belong to Puzzle, not Grid
+Class for a collection of spores? Then could flock them
 Input object that records mouse/touch state and has func Pushed() bool so things are triggered on mouse/touch up
-Spores (map of Spore objects in Grid)
 Generic interface for UI components (Button, Label)
 location/storage of assets
 Scale tiles to fit window
@@ -12,6 +14,8 @@ expand colors.go to all web colors (will be useful one day)
 color palette
 Sound
 
+x Shapes should alpha/scale in at start of level
+x Spores (map of Spore objects in Grid)
 x BUG Can click on a shrinking tile
 x TextButton(text, font, command) class, font.BoundString()
 x opening menu "do you prefer" "little puzzles" (no sections) or "bubble wrap"?
