@@ -222,8 +222,8 @@ func (t *Tile) SetImage() {
 
 // Rect gives the x,y coords of the tile's top left and bottom right corners, in screen coordinates
 func (t *Tile) Rect() (x0 int, y0 int, x1 int, y1 int) {
-	x0 = t.X * TileWidth
-	y0 = t.Y * TileHeight
+	x0 = t.X*TileWidth + LeftMargin
+	y0 = t.Y*TileHeight + TopMargin
 	x1 = x0 + TileWidth
 	y1 = y0 + TileHeight
 	return // using named return parameters
@@ -399,7 +399,7 @@ func (t *Tile) Update() error {
 	return nil
 }
 
-func (t *Tile) debugText(gridImage *ebiten.Image, str string, x, y float64) {
+func (t *Tile) debugText(screen *ebiten.Image, str string, x, y float64) {
 	bound, _ := font.BoundString(Acme.small, str)
 	w := (bound.Max.X - bound.Min.X).Ceil()
 	h := (bound.Max.Y - bound.Min.Y).Ceil()
@@ -411,11 +411,11 @@ func (t *Tile) debugText(gridImage *ebiten.Image, str string, x, y float64) {
 	} else {
 		c = BasicColors["Purple"]
 	}
-	text.Draw(gridImage, str, Acme.small, tx, ty, c)
+	text.Draw(screen, str, Acme.small, tx, ty, c)
 }
 
 // Draw handles rendering of Tile object
-func (t *Tile) Draw(gridImage *ebiten.Image) {
+func (t *Tile) Draw(screen *ebiten.Image) {
 
 	// scale, point translation, rotate, object translation
 
@@ -431,7 +431,7 @@ func (t *Tile) Draw(gridImage *ebiten.Image) {
 	}
 
 	// Reset RGB (not Alpha) forcibly
-	// TODO why check!?
+	// tilesheet already has black shapes
 	if t.color != BasicColors["Black"] {
 		// reducing alpha leaves the endcaps doubled
 		op.ColorM.Scale(0, 0, 0, t.scale)
@@ -443,8 +443,16 @@ func (t *Tile) Draw(gridImage *ebiten.Image) {
 		// op.CompositeMode = ebiten.CompositeModeLighter
 	}
 
-	x := float64(t.X * TileWidth)
-	y := float64(t.Y * TileHeight)
+	/*
+		Precedence    Operator
+		5             *  /  %  <<  >>  &  &^
+		4             +  -  |  ^
+		3             ==  !=  <  <=  >  >=
+		2             &&
+		1             ||
+	*/
+	x := float64(LeftMargin + t.X*TileWidth)
+	y := float64(TopMargin + t.Y*TileHeight)
 
 	if t.state == TileShrinking || t.state == TileGrowing {
 		// first move the origin to the center of the tile
@@ -457,7 +465,7 @@ func (t *Tile) Draw(gridImage *ebiten.Image) {
 	// first move the origin to the center of the tile
 	op.GeoM.Translate(-halfTileWidth, -halfTileHeight)
 	// scale tile image up to allow endcaps to overhang
-	op.GeoM.Scale(400.0/300.0, 400.0/300.0) // 1.3333333 creates ugly scaling artifacts; TODO need to change 400x400 tiles to 600x600?
+	op.GeoM.Scale(400.0/300.0, 400.0/300.0) // 1.3333333 creates ugly scaling artifacts
 	// then move the origin back to top left
 	op.GeoM.Translate(halfTileWidth, halfTileHeight)
 
@@ -467,7 +475,7 @@ func (t *Tile) Draw(gridImage *ebiten.Image) {
 	// 	colorTransBlack := color.RGBA{R: 0, G: 0, B: 0, A: 0x10}
 	// 	ebitenutil.DrawRect(gridImage, float64(x), float64(y), float64(TileWidth), float64(TileHeight), colorTransBlack)
 	// }
-	gridImage.DrawImage(t.tileImage, op)
+	screen.DrawImage(t.tileImage, op)
 
 	// t.debugText(gridImage, fmt.Sprint(t.state), x, y)
 	// t.debugText(gridImage, fmt.Sprintf("%04b", t.coins), x, y)

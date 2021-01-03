@@ -15,11 +15,17 @@ import (
 	"golang.org/x/image/font"
 )
 
+// TilesAcross and TilesDown are package-level variables so they can be seen by Tile
+var (
+	TilesAcross int
+	TilesDown   int
+	LeftMargin  int
+	TopMargin   int
+)
+
 // Grid is an object representing the grid of tiles
 type Grid struct {
-	mode            string // "bubblewrap" | "puzzle"
-	width           int
-	height          int
+	mode            string  // "bubblewrap" | "puzzle"
 	tiles           []*Tile // a slice (not array!) of pointers to Tile objects
 	palette         Palette
 	colors          []*color.RGBA // a slice of pointers to colors for the tiles, one color per section
@@ -35,13 +41,13 @@ func (g *Grid) findTile(x, y int) *Tile {
 	// 	}
 	// }
 	// return nil
-	if x < 0 || x >= g.width {
+	if x < 0 || x >= TilesAcross {
 		return nil
 	}
-	if y < 0 || y >= g.height {
+	if y < 0 || y >= TilesDown {
 		return nil
 	}
-	i := x + (y * g.width)
+	i := x + (y * TilesAcross)
 	if i < 0 || i > len(g.tiles) {
 		log.Fatal("findTile index out of bounds")
 	}
@@ -49,10 +55,15 @@ func (g *Grid) findTile(x, y int) *Tile {
 }
 
 // NewGrid create a Grid object
-func NewGrid(m string, w, h int) (*Grid, error) {
-	g := &Grid{mode: m, width: w, height: h, tiles: make([]*Tile, w*h)}
+func NewGrid(m string) *Grid {
+
+	TilesAcross, TilesDown = ScreenWidth/TileWidth, ScreenHeight/TileHeight
+	LeftMargin = (ScreenWidth - (TilesAcross * TileWidth)) / 2
+	TopMargin = (ScreenHeight - (TilesDown * TileHeight)) / 2
+
+	g := &Grid{mode: m, tiles: make([]*Tile, TilesAcross*TilesDown)}
 	for i := range g.tiles {
-		g.tiles[i] = NewTile(g, i%w, i/w)
+		g.tiles[i] = NewTile(g, i%TilesAcross, i/TilesAcross)
 	}
 	// for i, t := range g.tiles {
 	// 	println(i, t.X, t.Y)
@@ -73,12 +84,12 @@ func NewGrid(m string, w, h int) (*Grid, error) {
 
 	g.spores = make([]*Spore, 0, 32)
 
-	return g, nil
+	return g
 }
 
 // Size returns the size of the grid in pixels
 func (g *Grid) Size() (int, int) {
-	return g.width * TileWidth, g.height * TileHeight
+	return TilesAcross * TileWidth, TilesDown * TileHeight
 }
 
 // FindTileAt finds the tile under the mouse click or touch
@@ -198,12 +209,16 @@ func (g *Grid) NextLevel() {
 
 // AddSpore to map of spores
 func (g *Grid) AddSpore(x, y int, img *ebiten.Image, deg int, col color.RGBA) {
-	x *= TileWidth
-	x += TileWidth / 2
-	y *= TileWidth
-	y += TileWidth / 2
-	sp := NewSpore(x, y, img, float64(deg), col)
+	// convert X,Y into screen coords of tile center
+	xScreen := LeftMargin + (x * TileWidth) + (TileWidth / 2)
+	yScreen := TopMargin + (y * TileHeight) + (TileHeight / 2)
+	sp := NewSpore(xScreen, yScreen, img, float64(deg), col)
 	g.spores = append(g.spores, sp)
+}
+
+// Layout implements ebiten.Game's Layout.
+func (g *Grid) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
+	return ScreenWidth, ScreenHeight
 }
 
 // Update the board state (transitions, user input)
@@ -216,10 +231,7 @@ func (g *Grid) Update() error {
 			g.NextLevel()
 		} else {
 			x, y := ebiten.CursorPosition()
-			originX := (ScreenWidth - (g.width * TileWidth)) / 2
-			originY := (ScreenHeight - (g.height * TileHeight)) / 2
-			// println(originX, originY, x, y)
-			tile := g.FindTileAt(x-originX, y-originY)
+			tile := g.FindTileAt(x, y)
 			if tile != nil {
 				tile.Rotate()
 			}
@@ -252,26 +264,29 @@ func (g *Grid) Update() error {
 }
 
 // Draw renders the grid into the gridImage
-func (g *Grid) Draw(gridImage *ebiten.Image) {
+func (g *Grid) Draw(screen *ebiten.Image) {
 	// display the background
-	gridImage.Fill(g.colorBackground)
+	screen.Fill(g.colorBackground)
 
 	str := fmt.Sprint(g.ud.Level)
 	bound, _ := font.BoundString(Acme.huge, str)
 	w := (bound.Max.X - bound.Min.X).Ceil()
 	h := (bound.Max.Y - bound.Min.Y).Ceil()
+	// TODO tidy the following
 	x, y := g.Size()
+	x += LeftMargin
+	y += TopMargin
 	x = (x / 2) - (w / 2)
 	y = (y / 2) + (h / 2)
 	colorTransBlack := color.RGBA{R: 0, G: 0, B: 0, A: 0x10}
-	text.Draw(gridImage, str, Acme.huge, x, y, colorTransBlack)
+	text.Draw(screen, str, Acme.huge, x, y, colorTransBlack)
 
 	for _, t := range g.tiles {
-		t.Draw(gridImage)
+		t.Draw(screen)
 	}
 
 	for _, sp := range g.spores {
-		sp.Draw(gridImage)
+		sp.Draw(screen)
 	}
-	ebitenutil.DebugPrint(gridImage, fmt.Sprintf("%d spores", len(g.spores)))
+	ebitenutil.DebugPrint(screen, fmt.Sprintf("%d spores", len(g.spores)))
 }

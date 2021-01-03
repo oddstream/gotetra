@@ -9,10 +9,7 @@ import (
 )
 
 func TestTileLinking(t *testing.T) {
-	g, err := NewGrid("puzzle", 9, 11)
-	if err != nil {
-		t.Error("Cannot create Grid")
-	}
+	g := NewGrid("puzzle")
 	t00 := g.findTile(0, 0)
 	if t00 == nil {
 		t.Error("cannot find t00")

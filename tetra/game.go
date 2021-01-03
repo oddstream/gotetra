@@ -8,8 +8,8 @@ import (
 
 // ScreenWidth and ScreenHeight are exported to main.go for ebiten.SetWindowSize()
 const (
-	ScreenWidth  = 700
-	ScreenHeight = 1000
+	ScreenWidth  = 1920 / 5
+	ScreenHeight = 1080 / 2
 )
 
 // Game represents a game state.

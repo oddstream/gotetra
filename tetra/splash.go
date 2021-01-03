@@ -52,11 +52,13 @@ func NewSplash() *Splash {
 	s.xPos = (ScreenWidth - sx) / 2
 	s.yPos = -sy
 
+	xCenter := ScreenWidth / 2
+
 	s.widgets = []Drawable{
-		NewLabel("Do you prefer", ScreenWidth/2, 400, Acme.normal),
-		NewTextButton("LITTLE PUZZLES", ScreenWidth/2, 500, Acme.large, func() { GSM.Switch(NewPuzzle("puzzle", 5, 7)) }),
-		NewLabel("or", ScreenWidth/2, 600, Acme.normal),
-		NewTextButton("BUBBLE WRAP", ScreenWidth/2, 700, Acme.large, func() { GSM.Switch(NewPuzzle("bubblewrap", 5, 9)) }),
+		NewLabel("Do you prefer", xCenter, 200, Acme.normal),
+		NewTextButton("LITTLE PUZZLES", xCenter, 300, Acme.large, func() { GSM.Switch(NewGrid("puzzle")) }),
+		NewLabel("or", xCenter, 400, Acme.normal),
+		NewTextButton("BUBBLE WRAP", xCenter, 500, Acme.large, func() { GSM.Switch(NewGrid("bubblewrap")) }),
 	}
 	return s
 }
