@@ -3,7 +3,6 @@
 package tetra
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"log"
@@ -81,6 +80,9 @@ func getSubImageAndScaleDown(tilesheetImage *ebiten.Image, rect image.Rectangle)
 	// each subImage is 400x400, but it need to appear to be 300x300 when scaled into a 100x100 tile
 	scaledImage := ebiten.NewImage(TileWidth, TileHeight)
 	op := &ebiten.DrawImageOptions{}
+	// op.CompositeMode = ebiten.CompositeModeSourceOver
+	// op.Filter = ebiten.FilterLinear
+
 	scaleX := float64(TileWidth) / 400.0
 	scaleY := float64(TileHeight) / 400.0
 	op.GeoM.Scale(scaleX, scaleY)
@@ -114,6 +116,12 @@ func init() {
 		3: image.Rect(800, 400, 1200, 800),
 		4: image.Rect(400, 400, 800, 800),
 		5: image.Rect(800, 0, 1200, 800),
+		// 0: image.Rect(0, 0, 200, 200),
+		// 1: image.Rect(0, 200, 400, 400),
+		// 2: image.Rect(200, 0, 400, 200),
+		// 3: image.Rect(400, 200, 600, 400),
+		// 4: image.Rect(200, 200, 400, 400),
+		// 5: image.Rect(400, 0, 600, 400),
 	}
 
 	tileImages = map[int]*ebiten.Image{
@@ -455,12 +463,12 @@ func (t *Tile) Draw(gridImage *ebiten.Image) {
 
 	op.GeoM.Translate(float64(x), float64(y))
 
-	if t.X%2 == 0 && t.Y%2 == 0 {
-		colorTransBlack := color.RGBA{R: 0, G: 0, B: 0, A: 0x10}
-		ebitenutil.DrawRect(gridImage, float64(x), float64(y), float64(TileWidth), float64(TileHeight), colorTransBlack)
-	}
+	// if t.X%2 == 0 && t.Y%2 == 0 {
+	// 	colorTransBlack := color.RGBA{R: 0, G: 0, B: 0, A: 0x10}
+	// 	ebitenutil.DrawRect(gridImage, float64(x), float64(y), float64(TileWidth), float64(TileHeight), colorTransBlack)
+	// }
 	gridImage.DrawImage(t.tileImage, op)
 
-	t.debugText(gridImage, fmt.Sprint(t.state), x, y)
+	// t.debugText(gridImage, fmt.Sprint(t.state), x, y)
 	// t.debugText(gridImage, fmt.Sprintf("%04b", t.coins), x, y)
 }

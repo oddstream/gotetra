@@ -3,10 +3,11 @@
 package tetra
 
 import (
+	"bytes"
+	"image"
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 // Drawable type implements UpDate, Draw and Pushed
@@ -27,20 +28,35 @@ type Splash struct {
 // NewSplash creates and initializes a Splash/GameState object
 func NewSplash() *Splash {
 	s := &Splash{}
-	var err error
-	s.logoImage, _, err = ebitenutil.NewImageFromFile("/home/gilbert/Tetra/assets/oddstream logo.png")
+	// var err error
+	// s.logoImage, _, err = ebitenutil.NewImageFromFile("/home/gilbert/Tetra/assets/oddstream logo.png")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// Decode image from a byte slice instead of a file so that this works in any working directory.
+	// If you want to use a file, there are some options:
+	// 1) Use os.Open and pass the file to the image decoder.
+	//    This is a very regular way, but doesn't work on browsers.
+	// 2) Use ebitenutil.OpenFile and pass the file to the image decoder.
+	//    This works even on browsers.
+	// 3) Use ebitenutil.NewImageFromFile to create an ebiten.Image directly from a file.
+	//    This also works on browsers.
+	img, _, err := image.Decode(bytes.NewReader(Logo_png))
 	if err != nil {
 		log.Fatal(err)
 	}
+	s.logoImage = ebiten.NewImageFromImage(img)
+
 	sx, sy := s.logoImage.Size()
 	s.xPos = (ScreenWidth - sx) / 2
 	s.yPos = -sy
 
 	s.widgets = []Drawable{
 		NewLabel("Do you prefer", ScreenWidth/2, 400, Acme.normal),
-		NewTextButton("LITTLE PUZZLES", ScreenWidth/2, 500, Acme.large, func() { GSM.Switch(NewPuzzle("puzzle", 4, 5)) }),
+		NewTextButton("LITTLE PUZZLES", ScreenWidth/2, 500, Acme.large, func() { GSM.Switch(NewPuzzle("puzzle", 5, 7)) }),
 		NewLabel("or", ScreenWidth/2, 600, Acme.normal),
-		NewTextButton("BUBBLE WRAP", ScreenWidth/2, 700, Acme.large, func() { GSM.Switch(NewPuzzle("bubblewrap", 4, 5)) }),
+		NewTextButton("BUBBLE WRAP", ScreenWidth/2, 700, Acme.large, func() { GSM.Switch(NewPuzzle("bubblewrap", 5, 9)) }),
 	}
 	return s
 }
@@ -78,6 +94,6 @@ func (s *Splash) Draw(screen *ebiten.Image) {
 		d.Draw(screen)
 	}
 
-	ebitenutil.DrawLine(screen, 0, 500, ScreenWidth, 500, BasicColors["Black"])
-	ebitenutil.DrawLine(screen, 0, 700, ScreenWidth, 700, BasicColors["Black"])
+	// ebitenutil.DrawLine(screen, 0, 500, ScreenWidth, 500, BasicColors["Black"])
+	// ebitenutil.DrawLine(screen, 0, 700, ScreenWidth, 700, BasicColors["Black"])
 }

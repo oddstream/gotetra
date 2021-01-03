@@ -2,6 +2,9 @@ Is Tetra a puzzle or is it bubble-wrap?
 If it's bubble-wrap, then it has colored sections which disappear when complete.
 
 Only Update returns an error, NOT Draw or Layout
+Dominos mode
+Endcaps being clipped at edge of gridImage
+Understand ebiten's use of build flags "// +build example" https://dave.cheney.net/2013/10/12/how-to-use-conditional-compilation-with-the-go-build-tool
 Boid's use of Vector2D
 Spores should maybe belong to Puzzle, not Grid
 Class for a collection of spores? Then could flock them
@@ -11,7 +14,11 @@ Scale tiles to fit window
 Save level state in a better place, currently it gets dumped in Home/Tetra?
 expand colors.go to all web colors (will be useful one day)
 Sound
+func SetWindowIcon()
 
+x Decode png image from a byte slice instead of a file (https://github.com/hajimehoshi/file2byteslice)
+x Grid (and main) background is palette average to hide the jaggies
+x Try 100x100 tilemap (on 200x200 grid)
 x Generic interface for UI components (Button, Label)
 x color palette
 x Shapes should alpha/scale in at start of level

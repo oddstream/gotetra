@@ -32,7 +32,7 @@ func NewTextButton(str string, x, y int, btnFont font.Face, actionFn func()) *Te
 
 // Pushed returns true if the button has just been pushed
 func (tb *TextButton) Pushed() bool {
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
 		if x > tb.xOrigin && x < tb.xOrigin+tb.width {
 			if y > tb.yOrigin && y < tb.yOrigin+tb.height {

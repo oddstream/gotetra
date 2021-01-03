@@ -17,14 +17,15 @@ import (
 
 // Grid is an object representing the grid of tiles
 type Grid struct {
-	mode    string // "bubblewrap" | "puzzle"
-	width   int
-	height  int
-	tiles   []*Tile // a slice (not array!) of pointers to Tile objects
-	palette Palette
-	colors  []*color.RGBA // a slice of pointers to colors for the tiles, one color per section
-	ud      *UserData
-	spores  []*Spore
+	mode            string // "bubblewrap" | "puzzle"
+	width           int
+	height          int
+	tiles           []*Tile // a slice (not array!) of pointers to Tile objects
+	palette         Palette
+	colors          []*color.RGBA // a slice of pointers to colors for the tiles, one color per section
+	ud              *UserData
+	spores          []*Spore
+	colorBackground color.RGBA
 }
 
 func (g *Grid) findTile(x, y int) *Tile {
@@ -187,6 +188,7 @@ func (g *Grid) NextLevel() {
 		t.PlaceCoin()
 	}
 	g.palette = Palettes[rand.Int()%len(Palettes)]
+	g.colorBackground = CalcBackgroundColor(g.palette)
 	g.ColorTiles()
 	for _, t := range g.tiles {
 		t.Jumble()
@@ -209,7 +211,7 @@ func (g *Grid) Update() error {
 	// TODO move input up to puzzle so we can reset at that level (where level is)
 	// or just move level down here
 	// if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 		if g.IsComplete() {
 			g.NextLevel()
 		} else {
@@ -252,7 +254,7 @@ func (g *Grid) Update() error {
 // Draw renders the grid into the gridImage
 func (g *Grid) Draw(gridImage *ebiten.Image) {
 	// display the background
-	gridImage.Fill(backgroundColor)
+	gridImage.Fill(g.colorBackground)
 
 	str := fmt.Sprint(g.ud.Level)
 	bound, _ := font.BoundString(Acme.huge, str)

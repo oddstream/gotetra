@@ -73,3 +73,18 @@ var Palettes = []Palette{
 var (
 	backgroundColor = color.RGBA{R: 0x50, G: 0x50, B: 0x50, A: 0xff}
 )
+
+// CalcBackgroundColor returns the average of all the colors in a palette, divided by two
+func CalcBackgroundColor(colNames []string) color.RGBA {
+	var r, g, b int
+	for _, cnam := range colNames {
+		col := ExtendedColors[cnam]
+		r += int(col.R)
+		g += int(col.G)
+		b += int(col.B)
+	}
+	r = r / len(colNames) / 2
+	g = g / len(colNames) / 2
+	b = b / len(colNames) / 2
+	return color.RGBA{R: uint8(r), G: uint8(g), B: uint8(b), A: 0xff}
+}

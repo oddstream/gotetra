@@ -42,7 +42,7 @@ func (p *Puzzle) Update() error {
 
 // Draw draws the current game to the given screen.
 func (p *Puzzle) Draw(screen *ebiten.Image) {
-	// screen.Fill(backgroundColor)
+	screen.Fill(p.grid.colorBackground)
 
 	// center gridImage in the screen
 	op := &ebiten.DrawImageOptions{}
