@@ -6,9 +6,8 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"path"
 )
-
-const fname string = "tetra.json"
 
 // UserData contains the level the user is on
 type UserData struct {
@@ -16,12 +15,35 @@ type UserData struct {
 	Level     int
 }
 
+func fullPath() string {
+	userConfigDir, err := os.UserConfigDir()
+	if err != nil {
+		log.Fatal(err)
+	}
+	// println("UserConfigDir", userConfigDir) // /home/gilbert/.config
+	return path.Join(userConfigDir, "oddstream.games", "tetra", "userdata.json")
+}
+
+func makeConfigDir() {
+	userConfigDir, err := os.UserConfigDir()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	dir := path.Join(userConfigDir, "oddstream.games", "tetra")
+	err = os.MkdirAll(dir, 0755) // https://stackoverflow.com/questions/14249467/os-mkdir-and-os-mkdirall-permission-value
+	if err != nil {
+		log.Fatal(err)
+	}
+	// if path is already a directory, MkdirAll does nothing and returns nil
+}
+
 // NewUserData create a new UserData object and tries to load it's content from file
 // it always returns an object, even if file does not exist
 func NewUserData() *UserData {
 	ud := &UserData{Copyright: "Copyright ©️ 2020 oddstream.games", Level: 1}
 
-	file, err := os.Open(fname)
+	file, err := os.Open(fullPath())
 	if err == nil && file != nil {
 		defer file.Close()
 
@@ -48,7 +70,10 @@ func (ud *UserData) Save() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	file, err := os.Create(fname)
+
+	makeConfigDir()
+
+	file, err := os.Create(fullPath())
 	if err != nil {
 		log.Fatal(err)
 	}

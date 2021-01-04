@@ -56,9 +56,9 @@ func NewSplash() *Splash {
 
 	s.widgets = []Drawable{
 		NewLabel("Do you prefer", xCenter, 200, Acme.normal),
-		NewTextButton("LITTLE PUZZLES", xCenter, 300, Acme.large, func() { GSM.Switch(NewGrid("puzzle")) }),
+		NewTextButton("LITTLE PUZZLES", xCenter, 300, Acme.large, func() { GSM.Switch(NewGrid("puzzle", 0, 0)) }),
 		NewLabel("or", xCenter, 400, Acme.normal),
-		NewTextButton("BUBBLE WRAP", xCenter, 500, Acme.large, func() { GSM.Switch(NewGrid("bubblewrap")) }),
+		NewTextButton("BUBBLE WRAP", xCenter, 500, Acme.large, func() { GSM.Switch(NewGrid("bubblewrap", 5, 7)) }),
 	}
 	return s
 }

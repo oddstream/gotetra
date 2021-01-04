@@ -14,12 +14,6 @@ import (
 	"golang.org/x/image/font"
 )
 
-// TileWidth is the unscaled width of a tile in pixels
-const TileWidth int = 100
-
-// TileHeight is the unscaled height of a tile in pixels
-const TileHeight int = 100
-
 // MinimumScale is the smallest a shape gets, used when creating and when completed
 const MinimumScale float64 = 0.1
 
@@ -72,6 +66,9 @@ var (
 
 func getSubImageAndScaleDown(tilesheetImage *ebiten.Image, rect image.Rectangle) *ebiten.Image {
 
+	if TileWidth == 0 || TileHeight == 0 {
+		log.Fatal("Tile dimensions not set")
+	}
 	// had a spot of bother scaling/rotating the tile image in Draw(), so pre-scale the tile images here
 	// extract sub image, scale it, draw it into another image, then draw that constucted image into gridImage
 
@@ -92,8 +89,14 @@ func getSubImageAndScaleDown(tilesheetImage *ebiten.Image, rect image.Rectangle)
 	return scaledImage
 }
 
-func init() {
-	tilesheetImage, _, err := ebitenutil.NewImageFromFile("/home/gilbert/Tetra/assets/tilesheet2.png")
+func initTileImages() {
+	// used to be func init(), but TileWidth/Height may not be set yet, hence this func called from Grid init
+
+	if 0 == TileWidth || 0 == TileHeight {
+		log.Fatal("Tile dimensions not set")
+	}
+
+	tilesheetImage, _, err := ebitenutil.NewImageFromFile("assets/tilesheet2.png")
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -1,7 +1,8 @@
 Is Tetra a puzzle or is it bubble-wrap? If it's bubble-wrap, then it has colored sections which disappear when complete.
 
 Only Update returns an error, NOT Draw or Layout
-Scale tiles to fit window, TilesAcross, TilesDown become const
+Resize window (find a use for Layout)
+Load Acme from acme_ttf.go
 WASM
 WASM on https://oddstream.games
 Android
@@ -12,11 +13,12 @@ Spores should maybe belong to Puzzle, not Grid
 Class for a collection of spores? Then could flock them
 Input object that records mouse/touch state and has func Pushed() bool so things are triggered on mouse/touch up
 location/storage of assets
-Save level state in a better place, currently it gets dumped in Home/Tetra?
 expand colors.go to all web colors (will be useful one day)
 Sound
 func SetWindowIcon()
 
+x Scaled tiles / Fixed tile size modes
+x Save level state in a better place, currently it gets dumped in Home/Tetra?
 x retire gridImage and send screen down heirarchy
 x calc number of tiles across, down, and left, top margins
 x retire Puzzle.go

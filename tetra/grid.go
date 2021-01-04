@@ -21,6 +21,8 @@ var (
 	TilesDown   int
 	LeftMargin  int
 	TopMargin   int
+	TileWidth   int
+	TileHeight  int
 )
 
 // Grid is an object representing the grid of tiles
@@ -55,11 +57,27 @@ func (g *Grid) findTile(x, y int) *Tile {
 }
 
 // NewGrid create a Grid object
-func NewGrid(m string) *Grid {
+func NewGrid(m string, w, h int) *Grid {
 
-	TilesAcross, TilesDown = ScreenWidth/TileWidth, ScreenHeight/TileHeight
+	if w == 0 || h == 0 {
+		TileWidth, TileHeight = 100, 100
+		TilesAcross, TilesDown = ScreenWidth/TileWidth, ScreenHeight/TileHeight
+	} else {
+		possibleW := ScreenWidth / (w + 1) // add 1 to create margin for endcaps
+		possibleH := ScreenHeight / (h + 1)
+		// golang gotcha there isn't a vanilla math.MinInt()
+		if possibleW < possibleH {
+			TileWidth, TileHeight = possibleW, possibleW
+		} else {
+			TileWidth, TileHeight = possibleH, possibleH
+		}
+		TilesAcross, TilesDown = w, h
+	}
 	LeftMargin = (ScreenWidth - (TilesAcross * TileWidth)) / 2
 	TopMargin = (ScreenHeight - (TilesDown * TileHeight)) / 2
+
+	// now we know the Size Of Things, tell the Tile to load it's static stuff
+	initTileImages()
 
 	g := &Grid{mode: m, tiles: make([]*Tile, TilesAcross*TilesDown)}
 	for i := range g.tiles {
@@ -79,7 +97,7 @@ func NewGrid(m string) *Grid {
 
 	g.ud = NewUserData()
 	// NextLevel will bump the UserData.Level, which isn't what we want, so
-	g.ud.Level--
+	g.ud.Level-- // TODO this is ugly, maybe .CompletedLevel?
 	g.NextLevel()
 
 	g.spores = make([]*Spore, 0, 32)
@@ -265,21 +283,22 @@ func (g *Grid) Update() error {
 
 // Draw renders the grid into the gridImage
 func (g *Grid) Draw(screen *ebiten.Image) {
-	// display the background
+
 	screen.Fill(g.colorBackground)
 
-	str := fmt.Sprint(g.ud.Level)
-	bound, _ := font.BoundString(Acme.huge, str)
-	w := (bound.Max.X - bound.Min.X).Ceil()
-	h := (bound.Max.Y - bound.Min.Y).Ceil()
-	// TODO tidy the following
-	x, y := g.Size()
-	x += LeftMargin
-	y += TopMargin
-	x = (x / 2) - (w / 2)
-	y = (y / 2) + (h / 2)
-	colorTransBlack := color.RGBA{R: 0, G: 0, B: 0, A: 0x10}
-	text.Draw(screen, str, Acme.huge, x, y, colorTransBlack)
+	{
+		str := fmt.Sprint(g.ud.Level)
+		bound, _ := font.BoundString(Acme.huge, str)
+		w := (bound.Max.X - bound.Min.X).Ceil()
+		h := (bound.Max.Y - bound.Min.Y).Ceil()
+		x, y := g.Size()
+		x = (x / 2) - (w / 2)
+		y = (y / 2) + (h / 2)
+		x += LeftMargin
+		y += TopMargin
+		colorTransBlack := color.RGBA{R: 0, G: 0, B: 0, A: 0x10}
+		text.Draw(screen, str, Acme.huge, x, y, colorTransBlack)
+	}
 
 	for _, t := range g.tiles {
 		t.Draw(screen)
@@ -288,5 +307,7 @@ func (g *Grid) Draw(screen *ebiten.Image) {
 	for _, sp := range g.spores {
 		sp.Draw(screen)
 	}
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("%d spores", len(g.spores)))
+
+	ebitenutil.DebugPrint(screen, fmt.Sprintf("%d,%d grid, %d spores", TilesAcross, TilesDown, len(g.spores)))
+
 }
