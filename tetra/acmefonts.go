@@ -3,7 +3,6 @@
 package tetra
 
 import (
-	"io/ioutil"
 	"log"
 
 	"github.com/golang/freetype/truetype"
@@ -27,12 +26,12 @@ func NewAcmeFonts() *AcmeFonts {
 	// 	log.Fatal(err)
 	// }
 	// golang gotcha use full path so "go test" can find asset
-	bytes, err := ioutil.ReadFile("/home/gilbert/Tetra/assets/Acme-Regular.ttf")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// bytes, err := ioutil.ReadFile("/home/gilbert/Tetra/assets/Acme-Regular.ttf")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 	// https://pkg.go.dev/golang.org/x/image@v0.0.0-20201208152932-35266b937fa6/font
-	tt, err := truetype.Parse(bytes)
+	tt, err := truetype.Parse(Acme_ttf)
 	if err != nil {
 		log.Fatal(err)
 	}
