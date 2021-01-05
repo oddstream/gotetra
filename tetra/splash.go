@@ -10,19 +10,25 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// Drawable type implements UpDate, Draw and Pushed
-type Drawable interface {
+// Widget type implements UpDate, Draw and Pushed
+type Widget interface {
 	Update() error
 	Draw(*ebiten.Image)
-	Pushed() bool
+	Rect() (int, int, int, int)
+	Pushed(*Input) bool
 	Action()
+}
+
+// Pushable type implements Rect
+type Pushable interface {
+	Rect() (int, int, int, int)
 }
 
 // Splash represents a game state.
 type Splash struct {
 	logoImage  *ebiten.Image
 	xPos, yPos int
-	widgets    []Drawable
+	widgets    []Widget
 }
 
 // NewSplash creates and initializes a Splash/GameState object
@@ -54,11 +60,15 @@ func NewSplash() *Splash {
 
 	xCenter := ScreenWidth / 2
 
-	s.widgets = []Drawable{
-		NewLabel("Do you prefer", xCenter, 200, Acme.normal),
-		NewTextButton("LITTLE PUZZLES", xCenter, 300, Acme.large, func() { GSM.Switch(NewGrid("puzzle", 0, 0)) }),
-		NewLabel("or", xCenter, 400, Acme.normal),
-		NewTextButton("BUBBLE WRAP", xCenter, 500, Acme.large, func() { GSM.Switch(NewGrid("bubblewrap", 5, 7)) }),
+	yPlaces := [6]int{}
+	for i := 0; i < 6; i++ {
+		yPlaces[i] = (ScreenHeight / 6) * i
+	}
+	s.widgets = []Widget{
+		NewLabel("Do you prefer", xCenter, yPlaces[2], Acme.normal),
+		NewTextButton("LITTLE PUZZLES", xCenter, yPlaces[3], Acme.large, func() { GSM.Switch(NewGrid("puzzle", 7, 7)) }),
+		NewLabel("or", xCenter, yPlaces[4], Acme.normal),
+		NewTextButton("BUBBLE WRAP", xCenter, yPlaces[5], Acme.large, func() { GSM.Switch(NewGrid("bubblewrap", 0, 0)) }),
 	}
 	return s
 }
@@ -69,13 +79,16 @@ func (s *Splash) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHei
 }
 
 // Update updates the current game state.
-func (s *Splash) Update() error {
-	if s.yPos < 50 {
-		s.yPos += ScreenWidth / ebiten.DefaultTPS
+func (s *Splash) Update(i *Input) error {
+
+	i.Update()
+
+	if s.yPos < 0 {
+		s.yPos++
 	}
 
 	for _, w := range s.widgets {
-		if w.Pushed() {
+		if w.Pushed(i) {
 			w.Action()
 			break
 		}
@@ -86,7 +99,7 @@ func (s *Splash) Update() error {
 
 // Draw draws the current GameState to the given screen
 func (s *Splash) Draw(screen *ebiten.Image) {
-	screen.Fill(backgroundColor)
+	screen.Fill(colorBackground)
 
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(float64(s.xPos), float64(s.yPos))

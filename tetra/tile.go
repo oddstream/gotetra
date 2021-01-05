@@ -66,7 +66,7 @@ var (
 
 func getSubImageAndScaleDown(tilesheetImage *ebiten.Image, rect image.Rectangle) *ebiten.Image {
 
-	if TileWidth == 0 || TileHeight == 0 {
+	if TileSize == 0 {
 		log.Fatal("Tile dimensions not set")
 	}
 	// had a spot of bother scaling/rotating the tile image in Draw(), so pre-scale the tile images here
@@ -75,13 +75,13 @@ func getSubImageAndScaleDown(tilesheetImage *ebiten.Image, rect image.Rectangle)
 	subImage := tilesheetImage.SubImage(rect).(*ebiten.Image)
 
 	// each subImage is 400x400, but it need to appear to be 300x300 when scaled into a 100x100 tile
-	scaledImage := ebiten.NewImage(TileWidth, TileHeight)
+	scaledImage := ebiten.NewImage(TileSize, TileSize)
 	op := &ebiten.DrawImageOptions{}
 	// op.CompositeMode = ebiten.CompositeModeSourceOver
 	// op.Filter = ebiten.FilterLinear
 
-	scaleX := float64(TileWidth) / 400.0
-	scaleY := float64(TileHeight) / 400.0
+	scaleX := float64(TileSize) / 400.0
+	scaleY := float64(TileSize) / 400.0
 	op.GeoM.Scale(scaleX, scaleY)
 
 	scaledImage.DrawImage(subImage, op)
@@ -90,9 +90,9 @@ func getSubImageAndScaleDown(tilesheetImage *ebiten.Image, rect image.Rectangle)
 }
 
 func initTileImages() {
-	// used to be func init(), but TileWidth/Height may not be set yet, hence this func called from Grid init
+	// used to be func init(), but TileSize/Height may not be set yet, hence this func called from Grid init
 
-	if 0 == TileWidth || 0 == TileHeight {
+	if 0 == TileSize {
 		log.Fatal("Tile dimensions not set")
 	}
 
@@ -113,18 +113,18 @@ func initTileImages() {
 	*/
 
 	spriteMapRects := map[int]image.Rectangle{
-		0: image.Rect(0, 0, 400, 400),
-		1: image.Rect(0, 400, 800, 800),
-		2: image.Rect(400, 0, 800, 400),
-		3: image.Rect(800, 400, 1200, 800),
-		4: image.Rect(400, 400, 800, 800),
-		5: image.Rect(800, 0, 1200, 800),
-		// 0: image.Rect(0, 0, 200, 200),
-		// 1: image.Rect(0, 200, 400, 400),
-		// 2: image.Rect(200, 0, 400, 200),
-		// 3: image.Rect(400, 200, 600, 400),
-		// 4: image.Rect(200, 200, 400, 400),
-		// 5: image.Rect(400, 0, 600, 400),
+		// 0: image.Rect(0, 0, 400, 400),
+		// 1: image.Rect(0, 400, 800, 800),
+		// 2: image.Rect(400, 0, 800, 400),
+		// 3: image.Rect(800, 400, 1200, 800),
+		// 4: image.Rect(400, 400, 800, 800),
+		// 5: image.Rect(800, 0, 1200, 800),
+		0: image.Rect(0, 0, 399, 399),
+		1: image.Rect(0, 400, 799, 799),
+		2: image.Rect(400, 0, 799, 399),
+		3: image.Rect(800, 400, 1199, 799),
+		4: image.Rect(400, 400, 799, 799),
+		5: image.Rect(800, 0, 1199, 799),
 	}
 
 	tileImages = map[int]*ebiten.Image{
@@ -159,7 +159,8 @@ type Tile struct {
 // NewTile creates a new Tile object and returns a pointer to it
 // all new tiles start in a shrunken state
 func NewTile(g *Grid, x, y int) *Tile {
-	t := &Tile{G: g, X: x, Y: y}
+	t := &Tile{G: g, X: x, Y: y, scale: MinimumScale, color: colorUnsectioned}
+	// coins and section will be 0
 	return t
 }
 
@@ -167,8 +168,8 @@ func NewTile(g *Grid, x, y int) *Tile {
 func (t *Tile) Reset() {
 	t.coins = 0
 	t.section = 0
-	t.color = BasicColors["Black"]
-	t.SetImage() // reset to a blank tile image
+	t.color = colorUnsectioned //BasicColors["Black"]
+	t.SetImage()               // reset to a blank tile image, will set state
 }
 
 // PlaceCoin sets up a random config for this tile
@@ -201,7 +202,7 @@ func (t *Tile) ColorConnected(colorName string, section int) {
 		if t.coins&bits[d] != 0 {
 			tn := links[d]
 			// unconnected tiles will have coins 0 and not have been colored (ie still be black)
-			if tn != nil && tn.coins != 0 && tn.color == BasicColors["Black"] {
+			if tn != nil && tn.coins != 0 && tn.color == colorUnsectioned {
 				tn.ColorConnected(colorName, section)
 			}
 		}
@@ -225,10 +226,10 @@ func (t *Tile) SetImage() {
 
 // Rect gives the x,y coords of the tile's top left and bottom right corners, in screen coordinates
 func (t *Tile) Rect() (x0 int, y0 int, x1 int, y1 int) {
-	x0 = t.X*TileWidth + LeftMargin
-	y0 = t.Y*TileHeight + TopMargin
-	x1 = x0 + TileWidth
-	y1 = y0 + TileHeight
+	x0 = t.X*TileSize + LeftMargin
+	y0 = t.Y*TileSize + TopMargin
+	x1 = x0 + TileSize
+	y1 = y0 + TileSize
 	return // using named return parameters
 }
 
@@ -383,7 +384,7 @@ func (t *Tile) Update() error {
 			t.state = TileShrunk
 		}
 	case TileRotating:
-		t.currDegrees += 5
+		t.currDegrees += 10
 		if t.currDegrees >= 360 {
 			t.currDegrees = 0
 		}
@@ -406,8 +407,8 @@ func (t *Tile) debugText(screen *ebiten.Image, str string, x, y float64) {
 	bound, _ := font.BoundString(Acme.small, str)
 	w := (bound.Max.X - bound.Min.X).Ceil()
 	h := (bound.Max.Y - bound.Min.Y).Ceil()
-	tx := int(x) + (TileWidth-w)/2
-	ty := int(y) + (TileHeight-h)/2 + h
+	tx := int(x) + (TileSize-w)/2
+	ty := int(y) + (TileSize-h)/2 + h
 	var c color.Color
 	if t.IsComplete() {
 		c = BasicColors["Fushia"]
@@ -422,15 +423,14 @@ func (t *Tile) Draw(screen *ebiten.Image) {
 
 	// scale, point translation, rotate, object translation
 
-	halfTileWidth := float64(TileWidth / 2)
-	halfTileHeight := float64(TileHeight / 2)
+	halfTileSize := float64(TileSize / 2)
 
 	op := &ebiten.DrawImageOptions{}
 
 	if t.currDegrees != 0 {
-		op.GeoM.Translate(-halfTileWidth, -halfTileHeight)
+		op.GeoM.Translate(-halfTileSize, -halfTileSize)
 		op.GeoM.Rotate(float64(t.currDegrees) * 3.1415926535 / 180.0)
-		op.GeoM.Translate(halfTileWidth, halfTileHeight)
+		op.GeoM.Translate(halfTileSize, halfTileSize)
 	}
 
 	// Reset RGB (not Alpha) forcibly
@@ -454,29 +454,29 @@ func (t *Tile) Draw(screen *ebiten.Image) {
 		2             &&
 		1             ||
 	*/
-	x := float64(LeftMargin + t.X*TileWidth)
-	y := float64(TopMargin + t.Y*TileHeight)
+	x := float64(LeftMargin + t.X*TileSize)
+	y := float64(TopMargin + t.Y*TileSize)
 
-	if t.state == TileShrinking || t.state == TileGrowing {
+	if t.state == TileShrinking || t.state == TileShrunk || t.state == TileGrowing {
 		// first move the origin to the center of the tile
-		op.GeoM.Translate(-halfTileWidth, -halfTileHeight)
+		op.GeoM.Translate(-halfTileSize, -halfTileSize)
 		op.GeoM.Scale(t.scale, t.scale)
 		// then move the origin back to top left
-		op.GeoM.Translate(halfTileWidth, halfTileHeight)
+		op.GeoM.Translate(halfTileSize, halfTileSize)
 	}
 
 	// first move the origin to the center of the tile
-	op.GeoM.Translate(-halfTileWidth, -halfTileHeight)
+	op.GeoM.Translate(-halfTileSize, -halfTileSize)
 	// scale tile image up to allow endcaps to overhang
 	op.GeoM.Scale(400.0/300.0, 400.0/300.0) // 1.3333333 creates ugly scaling artifacts
 	// then move the origin back to top left
-	op.GeoM.Translate(halfTileWidth, halfTileHeight)
+	op.GeoM.Translate(halfTileSize, halfTileSize)
 
 	op.GeoM.Translate(float64(x), float64(y))
 
 	// if t.X%2 == 0 && t.Y%2 == 0 {
 	// 	colorTransBlack := color.RGBA{R: 0, G: 0, B: 0, A: 0x10}
-	// 	ebitenutil.DrawRect(gridImage, float64(x), float64(y), float64(TileWidth), float64(TileHeight), colorTransBlack)
+	// 	ebitenutil.DrawRect(gridImage, float64(x), float64(y), float64(TileSize), float64(TileSize), colorTransBlack)
 	// }
 	screen.DrawImage(t.tileImage, op)
 

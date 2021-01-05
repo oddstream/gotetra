@@ -8,6 +8,6 @@ import "github.com/hajimehoshi/ebiten/v2"
 // each seperate game state (eg Splash, Menu, Puzzle, GameOver) must implement these
 type GameState interface {
 	Layout(int, int) (int, int)
-	Update() error
+	Update(*Input) error
 	Draw(*ebiten.Image)
 }

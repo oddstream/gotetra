@@ -23,8 +23,8 @@ type Spore struct {
 }
 
 // NewSpore creates a new Spore and returns a pointer to it
-func NewSpore(x, y int, imgSrc *ebiten.Image, currDegrees float64, c color.RGBA) *Spore {
-	sp := &Spore{xCenter: float64(x), yCenter: float64(y), rot: currDegrees}
+func NewSpore(x, y float64, imgSrc *ebiten.Image, currDegrees float64, c color.RGBA) *Spore {
+	sp := &Spore{xCenter: x, yCenter: y, rot: currDegrees}
 
 	values := []float64{-1.0, 0.0, 1.0}
 	sp.rotVel = values[rand.Intn(len(values))]
@@ -34,7 +34,7 @@ func NewSpore(x, y int, imgSrc *ebiten.Image, currDegrees float64, c color.RGBA)
 	op := &ebiten.DrawImageOptions{}
 
 	sp.img = ebiten.NewImage(sporeSizeInt, sporeSizeInt)
-	w, h := imgSrc.Size() // expecting this to be 100,100
+	w, h := imgSrc.Size()
 	scaleX := sporeSize / float64(w)
 	scaleY := sporeSize / float64(h)
 	op.GeoM.Scale(scaleX, scaleY)

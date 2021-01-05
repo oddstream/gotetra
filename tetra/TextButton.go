@@ -4,7 +4,6 @@ package tetra
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
 )
@@ -30,15 +29,19 @@ func NewTextButton(str string, x, y int, btnFont font.Face, actionFn func()) *Te
 	return tb
 }
 
+// Rect gives the x,y coords of the TextButton's top left and bottom right corners, in screen coordinates
+func (tb *TextButton) Rect() (x0 int, y0 int, x1 int, y1 int) {
+	x0 = tb.xOrigin
+	y0 = tb.yOrigin
+	x1 = x0 + tb.width
+	y1 = y0 + tb.height
+	return // using named return parameters
+}
+
 // Pushed returns true if the button has just been pushed
-func (tb *TextButton) Pushed() bool {
-	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
-		x, y := ebiten.CursorPosition()
-		if x > tb.xOrigin && x < tb.xOrigin+tb.width {
-			if y > tb.yOrigin && y < tb.yOrigin+tb.height {
-				return true
-			}
-		}
+func (tb *TextButton) Pushed(i *Input) bool {
+	if i.X != 0 && i.Y != 0 {
+		return InRect(i.X, i.Y, tb.Rect)
 	}
 	return false
 }
@@ -50,7 +53,7 @@ func (tb *TextButton) Action() {
 	}
 }
 
-// Update the button state (transitions, user input)
+// Update the button state (transitions, NOT user input)
 func (tb *TextButton) Update() error {
 	return nil
 }

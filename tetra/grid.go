@@ -10,7 +10,6 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
 )
@@ -21,8 +20,7 @@ var (
 	TilesDown   int
 	LeftMargin  int
 	TopMargin   int
-	TileWidth   int
-	TileHeight  int
+	TileSize    int
 )
 
 // Grid is an object representing the grid of tiles
@@ -60,21 +58,21 @@ func (g *Grid) findTile(x, y int) *Tile {
 func NewGrid(m string, w, h int) *Grid {
 
 	if w == 0 || h == 0 {
-		TileWidth, TileHeight = 100, 100
-		TilesAcross, TilesDown = ScreenWidth/TileWidth, ScreenHeight/TileHeight
+		TileSize, TileSize = 100, 100
+		TilesAcross, TilesDown = ScreenWidth/TileSize, ScreenHeight/TileSize
 	} else {
 		possibleW := ScreenWidth / (w + 1) // add 1 to create margin for endcaps
 		possibleH := ScreenHeight / (h + 1)
 		// golang gotcha there isn't a vanilla math.MinInt()
 		if possibleW < possibleH {
-			TileWidth, TileHeight = possibleW, possibleW
+			TileSize, TileSize = possibleW, possibleW
 		} else {
-			TileWidth, TileHeight = possibleH, possibleH
+			TileSize, TileSize = possibleH, possibleH
 		}
 		TilesAcross, TilesDown = w, h
 	}
-	LeftMargin = (ScreenWidth - (TilesAcross * TileWidth)) / 2
-	TopMargin = (ScreenHeight - (TilesDown * TileHeight)) / 2
+	LeftMargin = (ScreenWidth - (TilesAcross * TileSize)) / 2
+	TopMargin = (ScreenHeight - (TilesDown * TileSize)) / 2
 
 	// now we know the Size Of Things, tell the Tile to load it's static stuff
 	initTileImages()
@@ -107,14 +105,13 @@ func NewGrid(m string, w, h int) *Grid {
 
 // Size returns the size of the grid in pixels
 func (g *Grid) Size() (int, int) {
-	return TilesAcross * TileWidth, TilesDown * TileHeight
+	return TilesAcross * TileSize, TilesDown * TileSize
 }
 
 // FindTileAt finds the tile under the mouse click or touch
 func (g *Grid) FindTileAt(x, y int) *Tile {
 	for _, t := range g.tiles {
-		x0, y0, x1, y1 := t.Rect()
-		if x > x0 && x < x1 && y > y0 && y < y1 {
+		if InRect(x, y, t.Rect) {
 			return t
 		}
 	}
@@ -123,7 +120,7 @@ func (g *Grid) FindTileAt(x, y int) *Tile {
 
 func (g *Grid) findUnsectionedTile() *Tile {
 	for _, t := range g.tiles {
-		if t.coins != 0 && t.color == BasicColors["Black"] {
+		if t.coins != 0 && t.color == colorUnsectioned {
 			return t
 		}
 	}
@@ -228,9 +225,9 @@ func (g *Grid) NextLevel() {
 // AddSpore to map of spores
 func (g *Grid) AddSpore(x, y int, img *ebiten.Image, deg int, col color.RGBA) {
 	// convert X,Y into screen coords of tile center
-	xScreen := LeftMargin + (x * TileWidth) + (TileWidth / 2)
-	yScreen := TopMargin + (y * TileHeight) + (TileHeight / 2)
-	sp := NewSpore(xScreen, yScreen, img, float64(deg), col)
+	xScreen := LeftMargin + (x * TileSize) + (TileSize / 2)
+	yScreen := TopMargin + (y * TileSize) + (TileSize / 2)
+	sp := NewSpore(float64(xScreen), float64(yScreen), img, float64(deg), col)
 	g.spores = append(g.spores, sp)
 }
 
@@ -240,16 +237,20 @@ func (g *Grid) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 // Update the board state (transitions, user input)
-func (g *Grid) Update() error {
-	// TODO move input up to puzzle so we can reset at that level (where level is)
-	// or just move level down here
-	// if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
-	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+func (g *Grid) Update(i *Input) error {
+
+	i.Update()
+
+	if i.X != 0 && i.Y != 0 {
 		if g.IsComplete() {
 			g.NextLevel()
 		} else {
-			x, y := ebiten.CursorPosition()
-			tile := g.FindTileAt(x, y)
+			// could treat the Tiles as Widgets
+			// implement Tile.Pushed(), Tile.Action()
+			// would mean asking each tile during Tile.Update()
+			// or creating an object that links Input with a list of widgets
+			// Grid has Widget[] instead of []Tile
+			tile := g.FindTileAt(i.X, i.Y)
 			if tile != nil {
 				tile.Rotate()
 			}

@@ -1,27 +1,35 @@
-Is Tetra a puzzle or is it bubble-wrap? If it's bubble-wrap, then it has colored sections which disappear when complete.
+? Is Tetra a puzzle or is it bubble-wrap? If it's bubble-wrap, then it has colored sections which disappear when complete.
+? Should this be a value, or a pointer to a value? Passing a value makes data immutable.
 
+IsSectionComplete/IsCompleteSection
+Use composition (no explicit field name)
+Use embedding
+Use overloading
 Only Update returns an error, NOT Draw or Layout
+make Input smarter (using Pushable interface?)
 Resize window (find a use for Layout)
-Load Acme from acme_ttf.go
 WASM
 WASM on https://oddstream.games
 Android
 Dominos mode
 Understand ebiten's use of build flags "// +build example" https://dave.cheney.net/2013/10/12/how-to-use-conditional-compilation-with-the-go-build-tool
 Boid's use of Vector2D
-Spores should maybe belong to Puzzle, not Grid
 Class for a collection of spores? Then could flock them
 Input object that records mouse/touch state and has func Pushed() bool so things are triggered on mouse/touch up
-location/storage of assets
 expand colors.go to all web colors (will be useful one day)
 Sound
 func SetWindowIcon()
 
+x use TileSize instead of TileSize, TileSize
+x Flash of underlying shape when spores forming
+x location/storage of assets
+x Load Acme from acme_ttf.go
 x Scaled tiles / Fixed tile size modes
 x Save level state in a better place, currently it gets dumped in Home/Tetra?
 x retire gridImage and send screen down heirarchy
 x calc number of tiles across, down, and left, top margins
 x retire Puzzle.go
+- Spores should maybe belong to Puzzle, not Grid
 x Endcaps being clipped at edge of gridImage
 x Windows
 x Decode png image from a byte slice instead of a file (https://github.com/hajimehoshi/file2byteslice)
