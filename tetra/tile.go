@@ -19,10 +19,10 @@ const MinimumScale float64 = 0.1
 
 // NORTH is the bit pattern for the upwards direction
 const (
-	NORTH = 0b0001
-	EAST  = 0b0010
-	SOUTH = 0b0100
-	WEST  = 0b1000
+	NORTH = 0b0001 // 1 << iota
+	EAST  = 0b0010 // 1 << 1
+	SOUTH = 0b0100 // 1 << 2
+	WEST  = 0b1000 // 1 << 3
 	MASK  = 0b1111
 )
 
@@ -72,7 +72,14 @@ func getSubImageAndScaleDown(tilesheetImage *ebiten.Image, rect image.Rectangle)
 	// had a spot of bother scaling/rotating the tile image in Draw(), so pre-scale the tile images here
 	// extract sub image, scale it, draw it into another image, then draw that constucted image into gridImage
 
-	subImage := tilesheetImage.SubImage(rect).(*ebiten.Image)
+	// TODO explain this type assertion
+	// it asserts that the item inside (*ebiten.image).SubImage(image.Rectangle) (which returns image.Image)
+	// also implements *ebiten.Image
+	// image.Image is an interface that has ColorModel(), Bounds(), At() methods
+	// ebiten.Image is a type struct that also has ColorModel(), Bounds(), At() methods (and others)
+	// still a bit confused that image.Image is a value, and *ebiten.Image is a pointer
+	subImage := tilesheetImage.SubImage(rect)
+	// subImage := tilesheetImage.SubImage(rect).(*ebiten.Image)
 
 	// each subImage is 400x400, but it need to appear to be 300x300 when scaled into a 100x100 tile
 	scaledImage := ebiten.NewImage(TileSize, TileSize)
@@ -84,18 +91,20 @@ func getSubImageAndScaleDown(tilesheetImage *ebiten.Image, rect image.Rectangle)
 	scaleY := float64(TileSize) / 400.0
 	op.GeoM.Scale(scaleX, scaleY)
 
-	scaledImage.DrawImage(subImage, op)
+	// scaledImage.DrawImage(subImage, op)
+	scaledImage.DrawImage(subImage.(*ebiten.Image), op)
 
 	return scaledImage
 }
 
 func initTileImages() {
-	// used to be func init(), but TileSize/Height may not be set yet, hence this func called from Grid init
+	// used to be func init(), but TileSize may not be set yet, hence this func called from Grid init
 
 	if 0 == TileSize {
 		log.Fatal("Tile dimensions not set")
 	}
 
+	// TODO load this from tilesheet_png.go
 	tilesheetImage, _, err := ebitenutil.NewImageFromFile("assets/tilesheet2.png")
 	if err != nil {
 		log.Fatal(err)

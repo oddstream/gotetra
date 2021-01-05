@@ -98,7 +98,7 @@ func NewGrid(m string, w, h int) *Grid {
 	g.ud.Level-- // TODO this is ugly, maybe .CompletedLevel?
 	g.NextLevel()
 
-	g.spores = make([]*Spore, 0, 32)
+	g.spores = make([]*Spore, 0, TilesAcross*TilesDown)
 
 	return g
 }

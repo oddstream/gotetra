@@ -1,6 +1,8 @@
 ? Is Tetra a puzzle or is it bubble-wrap? If it's bubble-wrap, then it has colored sections which disappear when complete.
 ? Should this be a value, or a pointer to a value? Passing a value makes data immutable.
 
+use image.Rect, image.Rectangle, image.Point
+Point.In
 IsSectionComplete/IsCompleteSection
 Use composition (no explicit field name)
 Use embedding

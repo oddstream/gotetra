@@ -26,9 +26,9 @@ type Pushable interface {
 
 // Splash represents a game state.
 type Splash struct {
-	logoImage  *ebiten.Image
-	xPos, yPos int
-	widgets    []Widget
+	logoImage *ebiten.Image
+	pos       image.Point
+	widgets   []Widget
 }
 
 // NewSplash creates and initializes a Splash/GameState object
@@ -55,8 +55,7 @@ func NewSplash() *Splash {
 	s.logoImage = ebiten.NewImageFromImage(img)
 
 	sx, sy := s.logoImage.Size()
-	s.xPos = (ScreenWidth - sx) / 2
-	s.yPos = -sy
+	s.pos = image.Point{X: (ScreenWidth - sx) / 2, Y: -sy}
 
 	xCenter := ScreenWidth / 2
 
@@ -83,8 +82,8 @@ func (s *Splash) Update(i *Input) error {
 
 	i.Update()
 
-	if s.yPos < 0 {
-		s.yPos++
+	if s.pos.Y < 0 {
+		s.pos.Y++
 	}
 
 	for _, w := range s.widgets {
@@ -102,7 +101,7 @@ func (s *Splash) Draw(screen *ebiten.Image) {
 	screen.Fill(colorBackground)
 
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(s.xPos), float64(s.yPos))
+	op.GeoM.Translate(float64(s.pos.X), float64(s.pos.Y))
 	screen.DrawImage(s.logoImage, op)
 
 	for _, d := range s.widgets {

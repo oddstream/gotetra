@@ -3,6 +3,8 @@
 package tetra
 
 import (
+	"image"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
@@ -10,28 +12,26 @@ import (
 
 // Label is an object that represents a button
 type Label struct {
-	text             string
-	font             font.Face
-	xCenter, yCenter int
-	xOrigin, yOrigin int
-	width, height    int
+	text           string
+	font           font.Face
+	origin, center image.Point
+	width, height  int
 }
 
 // NewLabel creates and returns a new Label object centered at x,y
 func NewLabel(str string, x, y int, btnFont font.Face) *Label {
-	l := &Label{text: str, xCenter: x, yCenter: y, font: btnFont}
+	l := &Label{text: str, center: image.Point{X: x, Y: y}, font: btnFont}
 	bound, _ := font.BoundString(l.font, l.text)
 	l.width = (bound.Max.X - bound.Min.X).Ceil()
 	l.height = (bound.Max.Y - bound.Min.Y).Ceil()
-	l.xOrigin = l.xCenter - (l.width / 2)
-	l.yOrigin = l.yCenter - (l.height / 2)
+	l.origin = image.Point{X: l.center.X - (l.width / 2), Y: l.center.Y - (l.height / 2)}
 	return l
 }
 
 // Rect gives the x,y coords of the label's top left and bottom right corners, in screen coordinates
 func (l *Label) Rect() (x0 int, y0 int, x1 int, y1 int) {
-	x0 = l.xOrigin
-	y0 = l.yOrigin
+	x0 = l.origin.X
+	y0 = l.origin.Y
 	x1 = x0 + l.width
 	y1 = y0 + l.height
 	return // using named return parameters
@@ -55,6 +55,6 @@ func (l *Label) Update() error {
 // Draw handles rendering of Label object
 func (l *Label) Draw(screen *ebiten.Image) {
 
-	text.Draw(screen, l.text, l.font, l.xOrigin, l.yOrigin+l.height, BasicColors["White"])
+	text.Draw(screen, l.text, l.font, l.origin.X, l.origin.Y+l.height, BasicColors["White"])
 
 }
