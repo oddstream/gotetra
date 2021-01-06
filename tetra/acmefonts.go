@@ -19,7 +19,6 @@ type AcmeFonts struct {
 
 // NewAcmeFonts loads some fonts and returns a pointer to an object referencing them
 func NewAcmeFonts() *AcmeFonts {
-	af := &AcmeFonts{}
 
 	// path, err := filepath.Abs("/home/gilbert/Tetra/assets/Acme-Regular.ttf")
 	// if err != nil {
@@ -35,6 +34,9 @@ func NewAcmeFonts() *AcmeFonts {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	af := &AcmeFonts{}
+
 	af.small = truetype.NewFace(tt, &truetype.Options{
 		Size:    16,
 		DPI:     72,

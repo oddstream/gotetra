@@ -4,6 +4,7 @@ package tetra
 
 import (
 	"fmt"
+	"image"
 	"image/color"
 	"log"
 	"math/rand"
@@ -58,32 +59,31 @@ func (g *Grid) findTile(x, y int) *Tile {
 func NewGrid(m string, w, h int) *Grid {
 
 	if w == 0 || h == 0 {
-		TileSize, TileSize = 100, 100
+		TileSize = 100
 		TilesAcross, TilesDown = ScreenWidth/TileSize, ScreenHeight/TileSize
 	} else {
 		possibleW := ScreenWidth / (w + 1) // add 1 to create margin for endcaps
 		possibleH := ScreenHeight / (h + 1)
 		// golang gotcha there isn't a vanilla math.MinInt()
 		if possibleW < possibleH {
-			TileSize, TileSize = possibleW, possibleW
+			TileSize = possibleW
 		} else {
-			TileSize, TileSize = possibleH, possibleH
+			TileSize = possibleH
 		}
 		TilesAcross, TilesDown = w, h
 	}
 	LeftMargin = (ScreenWidth - (TilesAcross * TileSize)) / 2
 	TopMargin = (ScreenHeight - (TilesDown * TileSize)) / 2
 
-	// now we know the Size Of Things, tell the Tile to load it's static stuff
+	// now we know the Size Of Things, tell Tile to load it's static stuff
 	initTileImages()
 
 	g := &Grid{mode: m, tiles: make([]*Tile, TilesAcross*TilesDown)}
 	for i := range g.tiles {
 		g.tiles[i] = NewTile(g, i%TilesAcross, i/TilesAcross)
 	}
-	// for i, t := range g.tiles {
-	// 	println(i, t.X, t.Y)
-	// }
+
+	// link the tiles together to avoid all that tedious 2d array stuff
 	for _, t := range g.tiles {
 		x := t.X
 		y := t.Y
@@ -109,9 +109,9 @@ func (g *Grid) Size() (int, int) {
 }
 
 // FindTileAt finds the tile under the mouse click or touch
-func (g *Grid) FindTileAt(x, y int) *Tile {
+func (g *Grid) FindTileAt(pt image.Point) *Tile {
 	for _, t := range g.tiles {
-		if InRect(x, y, t.Rect) {
+		if InRect(pt, t.Rect) {
 			return t
 		}
 	}
@@ -241,7 +241,7 @@ func (g *Grid) Update(i *Input) error {
 
 	i.Update()
 
-	if i.X != 0 && i.Y != 0 {
+	if i.pt.X != 0 && i.pt.Y != 0 {
 		if g.IsComplete() {
 			g.NextLevel()
 		} else {
@@ -250,7 +250,7 @@ func (g *Grid) Update(i *Input) error {
 			// would mean asking each tile during Tile.Update()
 			// or creating an object that links Input with a list of widgets
 			// Grid has Widget[] instead of []Tile
-			tile := g.FindTileAt(i.X, i.Y)
+			tile := g.FindTileAt(i.pt)
 			if tile != nil {
 				tile.Rotate()
 			}

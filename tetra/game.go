@@ -1,4 +1,4 @@
-// Copyright ©️ 2020 oddstream.games
+// Copyright ©️ 2020-2021 oddstream.games
 
 package tetra
 

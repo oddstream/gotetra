@@ -1,6 +1,6 @@
 // Copyright ©️ 2020 oddstream.games
 
-// go mod init oddstream/games/tetra
+// go mod init oddstream.games/tetra
 // go mod tidy
 
 // the package defining a command (an excutable Go program) always has the name main

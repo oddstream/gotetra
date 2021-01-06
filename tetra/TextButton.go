@@ -40,8 +40,8 @@ func (tb *TextButton) Rect() (x0 int, y0 int, x1 int, y1 int) {
 
 // Pushed returns true if the button has just been pushed
 func (tb *TextButton) Pushed(i *Input) bool {
-	if i.X != 0 && i.Y != 0 {
-		return InRect(i.X, i.Y, tb.Rect)
+	if i.pt.X != 0 && i.pt.Y != 0 {
+		return InRect(i.pt, tb.Rect)
 	}
 	return false
 }
