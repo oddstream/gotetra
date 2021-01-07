@@ -140,8 +140,98 @@ func makeTile(coins uint, tileSize int) image.Image {
 		dc.DrawLine(center, center, nx, ny)
 
 	case NORTH | EAST | SOUTH | WEST:
+		dc.MoveTo(nx, ny)
+		dc.QuadraticTo(center, center, ex, ey)
+		dc.QuadraticTo(center, center, sx, sy)
+		dc.QuadraticTo(center, center, wx, wy)
+		dc.QuadraticTo(center, center, nx, ny)
+		// dc.DrawLine(nx, ny, sx, sy)
+		// dc.DrawLine(wx, wy, ex, ey)
+
+	default:
+		log.Fatal("makeTile called with wrong bits", coins)
+	}
+	dc.Stroke()
+
+	return dc.Image()
+}
+
+func makeTileCurvy(coins uint, tileSize int) image.Image {
+
+	tileSizeEx := tileSize + 100
+
+	margin := float64(tileSizeEx-tileSize) / 2
+	center := float64(tileSizeEx / 2)
+	lineWidth := float64(tileSize / 6)
+	circleRadius := float64(tileSize / 5)
+
+	nx, ny := center, margin
+	ex, ey := float64(tileSizeEx)-margin, center
+	sx, sy := center, float64(tileSizeEx)-margin
+	wx, wy := margin, center
+
+	dc := gg.NewContext(tileSizeEx, tileSizeEx)
+	dc.SetRGB(0, 0, 0)
+	dc.SetLineWidth(lineWidth)
+	dc.SetLineCap(gg.LineCapRound)
+
+	switch coins {
+	case 0:
+		// explicitly do nothing
+	case NORTH:
+		dc.DrawLine(nx, ny, center, center-circleRadius)
+		dc.DrawCircle(center, center, circleRadius)
+	case EAST:
+		dc.DrawLine(ex, ey, center+circleRadius, center)
+		dc.DrawCircle(center, center, circleRadius)
+	case SOUTH:
+		dc.DrawLine(sx, sy, center, center+circleRadius)
+		dc.DrawCircle(center, center, circleRadius)
+	case WEST:
+		dc.DrawLine(wx, wy, center-circleRadius, center)
+		dc.DrawCircle(center, center, circleRadius)
+
+	case NORTH | SOUTH:
 		dc.DrawLine(nx, ny, sx, sy)
+	case EAST | WEST:
 		dc.DrawLine(wx, wy, ex, ey)
+
+	case NORTH | EAST:
+		dc.MoveTo(nx, ny)
+		dc.QuadraticTo(center, center, ex, ey)
+	case EAST | SOUTH:
+		dc.MoveTo(ex, ey)
+		dc.QuadraticTo(center, center, sx, sy)
+	case SOUTH | WEST:
+		dc.MoveTo(sx, sy)
+		dc.QuadraticTo(center, center, wx, wy)
+	case WEST | NORTH:
+		dc.MoveTo(wx, wy)
+		dc.QuadraticTo(center, center, nx, ny)
+
+	case NORTH | EAST | SOUTH:
+		dc.MoveTo(nx, ny)
+		dc.QuadraticTo(center, center, ex, ey)
+		dc.QuadraticTo(center, center, sx, sy)
+	case EAST | SOUTH | WEST:
+		dc.MoveTo(ex, ey)
+		dc.QuadraticTo(center, center, sx, sy)
+		dc.QuadraticTo(center, center, wx, wy)
+	case SOUTH | WEST | NORTH:
+		dc.MoveTo(sx, sy)
+		dc.QuadraticTo(center, center, wx, wy)
+		dc.QuadraticTo(center, center, nx, ny)
+	case WEST | NORTH | EAST:
+		dc.MoveTo(wx, wy)
+		dc.QuadraticTo(center, center, nx, ny)
+		dc.QuadraticTo(center, center, ex, ey)
+
+	case NORTH | EAST | SOUTH | WEST:
+		dc.MoveTo(nx, ny)
+		dc.QuadraticTo(center, center, ex, ey)
+		dc.QuadraticTo(center, center, sx, sy)
+		dc.QuadraticTo(center, center, wx, wy)
+		dc.QuadraticTo(center, center, nx, ny)
 
 	default:
 		log.Fatal("makeTile called with wrong bits", coins)

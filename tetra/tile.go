@@ -49,7 +49,7 @@ func initTileImages() {
 
 	tileImageLibrary = make(map[uint]*ebiten.Image, 16)
 	for i := uint(0); i < 16; i++ {
-		img := makeTile(i, TileSize)
+		img := makeTileCurvy(i, TileSize)
 		// gg.Image() returns an *image.RGBA
 		tileImageLibrary[i] = ebiten.NewImageFromImage(img)
 	}
