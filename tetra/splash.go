@@ -65,7 +65,7 @@ func NewSplash() *Splash {
 	}
 	s.widgets = []Widget{
 		NewLabel("Do you prefer", xCenter, yPlaces[2], Acme.normal),
-		NewTextButton("LITTLE PUZZLES", xCenter, yPlaces[3], Acme.large, func() { GSM.Switch(NewGrid("puzzle", 7, 7)) }),
+		NewTextButton("LITTLE PUZZLES", xCenter, yPlaces[3], Acme.large, func() { GSM.Switch(NewGrid("puzzle", 5, 5)) }),
 		NewLabel("or", xCenter, yPlaces[4], Acme.normal),
 		NewTextButton("BUBBLE WRAP", xCenter, yPlaces[5], Acme.large, func() { GSM.Switch(NewGrid("bubblewrap", 0, 0)) }),
 	}

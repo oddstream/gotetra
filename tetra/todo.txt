@@ -1,8 +1,7 @@
 ? Is Tetra a puzzle or is it bubble-wrap? If it's bubble-wrap, then it has colored sections which disappear when complete.
 ? Should this be a value, or a pointer to a value? Passing a value makes data immutable.
 
-use image.Rect, image.Rectangle, image.Point
-Point.In
+
 IsSectionComplete/IsCompleteSection
 Use composition (no explicit field name)
 Use embedding
@@ -17,16 +16,18 @@ Dominos mode
 Understand ebiten's use of build flags "// +build example" https://dave.cheney.net/2013/10/12/how-to-use-conditional-compilation-with-the-go-build-tool
 Boid's use of Vector2D
 Class for a collection of spores? Then could flock them
-Input object that records mouse/touch state and has func Pushed() bool so things are triggered on mouse/touch up
 expand colors.go to all web colors (will be useful one day)
 Sound
 func SetWindowIcon()
 
+x Draw tilesheet using https://github.com/fogleman/gg
+x https://www.cairographics.org/tutorial/
 x use TileSize instead of TileSize, TileSize
 x Flash of underlying shape when spores forming
 x location/storage of assets
 x Load Acme from acme_ttf.go
 x Scaled tiles / Fixed tile size modes
+x Input object that records mouse/touch state and has func Pushed() bool so things are triggered on mouse/touch up
 x Save level state in a better place, currently it gets dumped in Home/Tetra?
 x retire gridImage and send screen down heirarchy
 x calc number of tiles across, down, and left, top margins

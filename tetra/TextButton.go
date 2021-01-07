@@ -46,7 +46,7 @@ func (tb *TextButton) Pushed(i *Input) bool {
 	return false
 }
 
-// Action invikes the action func
+// Action invokes the action func
 func (tb *TextButton) Action() {
 	if tb.action != nil {
 		tb.action()

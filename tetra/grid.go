@@ -70,6 +70,7 @@ func NewGrid(m string, w, h int) *Grid {
 		} else {
 			TileSize = possibleH
 		}
+		println("TileSize", TileSize)
 		TilesAcross, TilesDown = w, h
 	}
 	LeftMargin = (ScreenWidth - (TilesAcross * TileSize)) / 2
@@ -309,6 +310,6 @@ func (g *Grid) Draw(screen *ebiten.Image) {
 		sp.Draw(screen)
 	}
 
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("%d,%d grid, %d spores", TilesAcross, TilesDown, len(g.spores)))
+	ebitenutil.DebugPrint(screen, fmt.Sprintf("%d,%d grid of size %d, %d spores", TilesAcross, TilesDown, TileSize, len(g.spores)))
 
 }
