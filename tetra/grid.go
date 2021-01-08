@@ -302,12 +302,12 @@ func (g *Grid) Draw(screen *ebiten.Image) {
 		text.Draw(screen, str, Acme.huge, x, y, colorTransBlack)
 	}
 
-	for _, t := range g.tiles {
-		t.Draw(screen)
-	}
-
 	for _, sp := range g.spores {
 		sp.Draw(screen)
+	}
+
+	for _, t := range g.tiles {
+		t.Draw(screen)
 	}
 
 	ebitenutil.DebugPrint(screen, fmt.Sprintf("%d,%d grid of size %d, %d spores", TilesAcross, TilesDown, TileSize, len(g.spores)))
