@@ -140,13 +140,8 @@ func makeTile(coins uint, tileSize int) image.Image {
 		dc.DrawLine(center, center, nx, ny)
 
 	case NORTH | EAST | SOUTH | WEST:
-		dc.MoveTo(nx, ny)
-		dc.QuadraticTo(center, center, ex, ey)
-		dc.QuadraticTo(center, center, sx, sy)
-		dc.QuadraticTo(center, center, wx, wy)
-		dc.QuadraticTo(center, center, nx, ny)
-		// dc.DrawLine(nx, ny, sx, sy)
-		// dc.DrawLine(wx, wy, ex, ey)
+		dc.DrawLine(nx, ny, sx, sy)
+		dc.DrawLine(wx, wy, ex, ey)
 
 	default:
 		log.Fatal("makeTile called with wrong bits", coins)
@@ -158,7 +153,7 @@ func makeTile(coins uint, tileSize int) image.Image {
 
 func makeTileCurvy(coins uint, tileSize int) image.Image {
 
-	tileSizeEx := tileSize + 100
+	tileSizeEx := tileSize + (tileSize / 6) // same as linewidth
 
 	margin := float64(tileSizeEx-tileSize) / 2
 	center := float64(tileSizeEx / 2)

@@ -71,7 +71,7 @@ type Tile struct {
 	color       color.RGBA
 
 	// rotating, shrinking and growing tiles do not receive input
-	// don't need hammingWeight because graphics not created dynamically
+	// don't need hammingWeight
 }
 
 // NewTile creates a new Tile object and returns a pointer to it
@@ -131,7 +131,7 @@ func (t *Tile) ColorConnected(colorName string, section int) {
 func (t *Tile) SetImage() {
 	t.tileImage = tileImageLibrary[t.coins]
 	if t.tileImage == nil {
-		log.Fatal("tileImage is nil when coins is", t.coins)
+		log.Fatal("tileImage is nil when coins == ", t.coins)
 	}
 	t.currDegrees = 0
 	t.targDegrees = 0
@@ -206,7 +206,6 @@ func (t *Tile) Rotate() {
 		t.targDegrees = 0
 	}
 	t.state = TileRotating
-	// println("rotate", t.X, t.Y, t.coins)
 }
 
 // IsComplete returns true if the tile aligns properly with it's neighbours
@@ -291,6 +290,7 @@ func (t *Tile) Update() error {
 
 	switch t.state {
 	case TileSettled:
+		// nothing to do
 	case TileGrowing:
 		t.scale += 0.01
 		if t.scale >= 1.0 {
@@ -310,7 +310,6 @@ func (t *Tile) Update() error {
 		}
 		if t.currDegrees == t.targDegrees {
 			t.state = TileSettled
-			// t.SetImage()
 			if t.G.IsSectionComplete(t.section) {
 				t.G.FilterSection((*Tile).TriggerScaleDown, t.section)
 			}
