@@ -64,10 +64,10 @@ func NewSplash() *Splash {
 		yPlaces[i] = (ScreenHeight / 6) * i
 	}
 	s.widgets = []Widget{
-		NewLabel("Do you prefer", xCenter, yPlaces[2], Acme.normal),
-		NewTextButton("LITTLE PUZZLES", xCenter, yPlaces[3], Acme.large, func() { GSM.Switch(NewGrid("puzzle", 5, 5)) }),
-		NewLabel("or", xCenter, yPlaces[4], Acme.normal),
-		NewTextButton("BUBBLE WRAP", xCenter, yPlaces[5], Acme.large, func() { GSM.Switch(NewGrid("bubblewrap", 0, 0)) }),
+		NewTextButton("EASY", xCenter, yPlaces[2], Acme.large, func() { GSM.Switch(NewGrid("bubblewrap", 7, 6)) }),
+		NewTextButton("NORMAL", xCenter, yPlaces[3], Acme.large, func() { GSM.Switch(NewGrid("bubblewrap", 0, 0)) }),
+		NewTextButton("HARD", xCenter, yPlaces[4], Acme.large, func() { GSM.Switch(NewGrid("puzzle", 0, 0)) }),
+		NewTextButton("HARDEST", xCenter, yPlaces[5], Acme.large, func() { GSM.Switch(NewGrid("puzzle", 22, 16)) }),
 	}
 	return s
 }

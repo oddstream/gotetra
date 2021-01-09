@@ -12,6 +12,7 @@ import (
 // Input records state of mouse and touch
 type Input struct {
 	pt image.Point
+	backPressed bool
 }
 
 // NewInput Input object constructor
@@ -33,4 +34,6 @@ func (i *Input) Update() {
 		}
 	}
 	i.pt = image.Point{X: x, Y: y}
+	
+	i.backPressed = inpututil.IsKeyJustReleased(ebiten.KeyBackspace)
 }

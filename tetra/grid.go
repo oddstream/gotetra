@@ -63,7 +63,13 @@ func NewGrid(m string, w, h int) *Grid {
 		TilesAcross, TilesDown = ScreenWidth/TileSize, ScreenHeight/TileSize
 	} else {
 		possibleW := ScreenWidth / (w + 1) // add 1 to create margin for endcaps
+		if possibleW % 2 == 1 {
+			possibleW++
+		}
 		possibleH := ScreenHeight / (h + 1)
+		if possibleH % 2 == 1 {
+			possibleH++
+		}
 		// golang gotcha there isn't a vanilla math.MinInt()
 		if possibleW < possibleH {
 			TileSize = possibleW
@@ -256,6 +262,8 @@ func (g *Grid) Update(i *Input) error {
 				tile.Rotate()
 			}
 		}
+	} else if i.backPressed {
+		GSM.Switch(NewSplash())
 	}
 
 	for _, t := range g.tiles {
