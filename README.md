@@ -6,8 +6,8 @@ When I was a Serious programmer, I used to write a clone of Windows Notepad in w
 
 ## Screenshots
 
-![1](https://github.com/oddstream/gotetra/Screenshots/Screenshot1.png "1")
+![1](https://github.com/oddstream/gotetra/blob/master/Screenshots/Screenshot1.png "1")
 
-![2](https://github.com/oddstream/gotetra/Screenshots/Screenshot2.png "2")
+![2](https://github.com/oddstream/gotetra/blob/master/Screenshots/Screenshot1.png "2")
 
-![3](https://github.com/oddstream/gotetra/Screenshots/Screenshot3.png "3")
+![3](https://github.com/oddstream/gotetra/blob/master/Screenshots/Screenshot1.png "3")
