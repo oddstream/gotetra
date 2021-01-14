@@ -34,6 +34,8 @@ const (
 	TileShrinking
 	TileRotating
 	TileShrunk
+	TileBeingDragged
+	TileReturning
 )
 
 var (
@@ -70,6 +72,9 @@ type Tile struct {
 	section     int
 	color       color.RGBA
 
+	homeX, homeY     float64 // position of tile when settled
+	offsetX, offsetY float64 // offset to postion of tile when being dragged or lerping home
+
 	// rotating, shrinking and growing tiles do not receive input
 	// don't need hammingWeight
 }
@@ -78,6 +83,9 @@ type Tile struct {
 // all new tiles start in a shrunken state
 func NewTile(g *Grid, x, y int) *Tile {
 	t := &Tile{G: g, X: x, Y: y, scale: MinimumScale, color: colorUnsectioned}
+	t.homeX = float64(LeftMargin + t.X*TileSize)
+	t.homeY = float64(TopMargin + t.Y*TileSize)
+	t.offsetX, t.offsetY = 0, 0
 	// coins and section will be 0
 	return t
 }
@@ -304,7 +312,7 @@ func (t *Tile) Update() error {
 			t.state = TileShrunk
 		}
 	case TileRotating:
-		t.currDegrees += 10
+		t.currDegrees += 5
 		if t.currDegrees >= 360 {
 			t.currDegrees = 0
 		}
@@ -317,6 +325,16 @@ func (t *Tile) Update() error {
 	case TileShrunk:
 		t.G.AddSpore(t.X, t.Y, t.tileImage, t.currDegrees, t.color)
 		t.Reset()
+	case TileBeingDragged:
+		// nothing to do
+	case TileReturning:
+		// deliberatly do a skewed lerp so tile starts fast and decelerates
+		t.offsetX = lerp(t.offsetX, 0, 0.1)
+		t.offsetY = lerp(t.offsetY, 0, 0.1)
+		if t.offsetX < 1.0 && t.offsetY < 1.0 {
+			t.offsetX, t.offsetY = 0, 0
+			t.state = TileSettled
+		}
 	}
 
 	return nil
@@ -383,10 +401,10 @@ func (t *Tile) Draw(screen *ebiten.Image) {
 		2             &&
 		1             ||
 	*/
-	x := float64(LeftMargin + t.X*TileSize)
-	y := float64(TopMargin + t.Y*TileSize)
+	// x := float64(LeftMargin + t.X*TileSize)
+	// y := float64(TopMargin + t.Y*TileSize)
 
-	op.GeoM.Translate(x-overX, y-overY)
+	op.GeoM.Translate(t.homeX-overX+t.offsetX, t.homeY-overY+t.offsetY)
 
 	// if t.X%2 == 0 && t.Y%2 == 0 {
 	// 	colorTransBlack := color.RGBA{R: 0, G: 0, B: 0, A: 0x10}

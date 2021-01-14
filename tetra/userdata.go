@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"runtime"
 )
 
 // UserData contains the level the user is on
@@ -15,13 +16,16 @@ type UserData struct {
 	Level     int
 }
 
-func fullPath() string {
+func fullPath() (string, error) {
+	// os.Getenv("HOME") == "" on WASM
+	// could use something like errors.New("math: square root of negative number")
 	userConfigDir, err := os.UserConfigDir()
 	if err != nil {
-		log.Fatal(err)
+		println(err)
+		return "", err
 	}
 	// println("UserConfigDir", userConfigDir) // /home/gilbert/.config
-	return path.Join(userConfigDir, "oddstream.games", "tetra", "userdata.json")
+	return path.Join(userConfigDir, "oddstream.games", "tetra", "userdata.json"), nil
 }
 
 func makeConfigDir() {
@@ -41,9 +45,18 @@ func makeConfigDir() {
 // NewUserData create a new UserData object and tries to load it's content from file
 // it always returns an object, even if file does not exist
 func NewUserData() *UserData {
-	ud := &UserData{Copyright: "Copyright ©️ 2020 oddstream.games", Level: 1}
 
-	file, err := os.Open(fullPath())
+	ud := &UserData{Copyright: "Copyright ©️ 2020-2021 oddstream.games", Level: 1}
+
+	if runtime.GOARCH == "wasm" {
+		return ud
+	}
+
+	path, err := fullPath()
+	if err != nil {
+		return ud
+	}
+	file, err := os.Open(path)
 	if err == nil && file != nil {
 		defer file.Close()
 
@@ -66,14 +79,24 @@ func NewUserData() *UserData {
 
 // Save writes the UserData object to file
 func (ud *UserData) Save() {
+
+	if runtime.GOARCH == "wasm" {
+		return
+	}
+
 	bytes, err := json.Marshal(ud)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	path, err := fullPath()
+	if err != nil {
+		return
+	}
+
 	makeConfigDir()
 
-	file, err := os.Create(fullPath())
+	file, err := os.Create(path)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -83,4 +106,5 @@ func (ud *UserData) Save() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 }

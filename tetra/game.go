@@ -8,14 +8,12 @@ import (
 
 // ScreenWidth and ScreenHeight are exported to main.go for ebiten.SetWindowSize()
 const (
-	ScreenWidth  = 640 * 2 //1920
-	ScreenHeight = 480 * 2 //1080
+	ScreenWidth  = 1920 / 2
+	ScreenHeight = 1080 / 2
 )
 
 // Game represents a game state.
-type Game struct {
-	input *Input
-}
+type Game struct{}
 
 // GSM provides global access to the game state manager
 var GSM *GameStateManager = &GameStateManager{}
@@ -25,9 +23,7 @@ var Acme *AcmeFonts = NewAcmeFonts()
 
 // NewGame generates a new Game object.
 func NewGame() (*Game, error) {
-	g := &Game{
-		input: NewInput(),
-	}
+	g := &Game{}
 
 	GSM.Switch(NewSplash())
 
@@ -42,9 +38,8 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 // Update updates the current game state.
 func (g *Game) Update() error {
-	g.input.Update()
 	state := GSM.Get()
-	if err := state.Update(g.input); err != nil {
+	if err := state.Update(); err != nil {
 		return err
 	}
 	return nil

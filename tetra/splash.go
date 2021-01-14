@@ -29,11 +29,12 @@ type Splash struct {
 	logoImage *ebiten.Image
 	pos       image.Point
 	widgets   []Widget
+	input     *Input
 }
 
 // NewSplash creates and initializes a Splash/GameState object
 func NewSplash() *Splash {
-	s := &Splash{}
+	s := &Splash{input: NewInput()}
 	// var err error
 	// s.logoImage, _, err = ebitenutil.NewImageFromFile("/home/gilbert/Tetra/assets/oddstream logo.png")
 	// if err != nil {
@@ -78,16 +79,16 @@ func (s *Splash) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHei
 }
 
 // Update updates the current game state.
-func (s *Splash) Update(i *Input) error {
+func (s *Splash) Update() error {
 
-	i.Update()
+	s.input.Update()
 
 	if s.pos.Y < 0 {
 		s.pos.Y++
 	}
 
 	for _, w := range s.widgets {
-		if w.Pushed(i) {
+		if w.Pushed(s.input) {
 			w.Action()
 			break
 		}

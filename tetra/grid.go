@@ -11,6 +11,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
 )
@@ -33,6 +34,8 @@ type Grid struct {
 	ud              *UserData
 	spores          []*Spore
 	colorBackground color.RGBA
+	input           *Input
+	stroke          *Stroke
 }
 
 func (g *Grid) findTile(x, y int) *Tile {
@@ -83,7 +86,7 @@ func NewGrid(m string, w, h int) *Grid {
 	// now we know the Size Of Things, tell Tile to load it's static stuff
 	initTileImages()
 
-	g := &Grid{mode: m, tiles: make([]*Tile, TilesAcross*TilesDown)}
+	g := &Grid{mode: m, input: NewInput(), tiles: make([]*Tile, TilesAcross*TilesDown)}
 	for i := range g.tiles {
 		g.tiles[i] = NewTile(g, i%TilesAcross, i/TilesAcross)
 	}
@@ -242,28 +245,95 @@ func (g *Grid) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 // Update the board state (transitions, user input)
-func (g *Grid) Update(i *Input) error {
+func (g *Grid) Update() error {
 
-	i.Update()
+	var s *Stroke
 
-	if i.pt.X != 0 && i.pt.Y != 0 {
-		if g.IsComplete() {
-			g.NextLevel()
-		} else {
-			// could treat the Tiles as Widgets
-			// implement Tile.Pushed(), Tile.Action()
-			// would mean asking each tile during Tile.Update()
-			// or creating an object that links Input with a list of widgets
-			// Grid has Widget[] instead of []Tile
-			tile := g.FindTileAt(i.pt)
-			if tile != nil {
-				tile.Rotate()
-			}
-		}
-	} else if i.backPressed {
-		GSM.Switch(NewSplash())
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		s = NewStroke(&MouseStrokeSource{})
+	}
+	ts := inpututil.JustPressedTouchIDs()
+	if ts != nil && len(ts) == 1 {
+		s = NewStroke(&TouchStrokeSource{ts[0]})
 	}
 
+	if s != nil {
+		t := g.FindTileAt(s.PositionPoint())
+		if t.state == TileSettled {
+			g.stroke = s
+			t.state = TileBeingDragged
+			g.stroke.SetDraggingObject(t)
+		}
+	}
+
+	if g.stroke != nil {
+
+		g.stroke.Update()
+
+		{
+			t := g.stroke.DraggingObject().(*Tile)
+			dx, dy := g.stroke.PositionDiff()
+			t.offsetX = float64(dx)
+			t.offsetY = float64(dy)
+		}
+
+		if g.stroke.IsReleased() {
+
+			src := g.stroke.DraggingObject().(*Tile)
+			dst := g.FindTileAt(g.stroke.PositionPoint())
+
+			if src == dst {
+				src.offsetX, src.offsetY = 0, 0 // snap back home
+				src.state = TileSettled         // otherwise Tile won't rotate
+				if g.IsComplete() {
+					g.NextLevel()
+				} else {
+					src.Rotate()
+				}
+			} else if dst.coins == 0 {
+				// TODO refactor
+				dst.coins = src.coins
+				dst.color = src.color
+				dst.section = src.section
+				dst.tileImage = tileImageLibrary[dst.coins]
+
+				src.coins = 0
+				src.tileImage = tileImageLibrary[0]
+				src.offsetX, src.offsetY = 0, 0
+				src.state = TileSettled
+
+				if g.IsSectionComplete(dst.section) {
+					g.FilterSection((*Tile).TriggerScaleDown, dst.section)
+				}
+			} else {
+				// beware: tile will use offsetX,Y
+				src.state = TileReturning
+			}
+			g.stroke = nil
+		}
+		// else the stroke isn't released, so the tile is being dragged
+	}
+	/*
+		g.input.Update()
+
+		if g.input.pt.X != 0 && g.input.pt.Y != 0 {
+			if g.IsComplete() {
+				g.NextLevel()
+			} else {
+				// could treat the Tiles as Widgets
+				// implement Tile.Pushed(), Tile.Action()
+				// would mean asking each tile during Tile.Update()
+				// or creating an object that links Input with a list of widgets
+				// Grid has Widget[] instead of []Tile
+				tile := g.FindTileAt(g.input.pt)
+				if tile != nil {
+					tile.Rotate()
+				}
+			}
+		} else if g.input.backPressed {
+			GSM.Switch(NewSplash())
+		}
+	*/
 	for _, t := range g.tiles {
 		t.Update()
 	}
@@ -272,10 +342,6 @@ func (g *Grid) Update(i *Input) error {
 		sp.Update()
 	}
 
-	// if len(g.spores) > 16 {
-	// 	g.spores = g.spores[1:]
-	// 	println("trimmed spores")
-	// }
 	{
 		newSpores := make([]*Spore, 0, len(g.spores))
 		for _, sp := range g.spores {
