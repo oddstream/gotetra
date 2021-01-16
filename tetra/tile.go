@@ -152,7 +152,7 @@ func (t *Tile) SetImage() {
 	}
 }
 
-// Rect gives the x,y coords of the tile's top left and bottom right corners, in screen coordinates
+// Rect gives the x,y screen coords of the tile's top left and bottom right corners
 func (t *Tile) Rect() (x0 int, y0 int, x1 int, y1 int) {
 	x0 = t.X*TileSize + LeftMargin
 	y0 = t.Y*TileSize + TopMargin
@@ -328,7 +328,7 @@ func (t *Tile) Update() error {
 	case TileBeingDragged:
 		// nothing to do
 	case TileReturning:
-		// deliberatly do a skewed lerp so tile starts fast and decelerates
+		// deliberately do a wrong lerp so tile starts fast and decelerates
 		t.offsetX = lerp(t.offsetX, 0, 0.1)
 		t.offsetY = lerp(t.offsetY, 0, 0.1)
 		if t.offsetX < 1.0 && t.offsetY < 1.0 {

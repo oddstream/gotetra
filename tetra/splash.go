@@ -6,8 +6,10 @@ import (
 	"bytes"
 	"image"
 	"log"
+	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 // Widget type implements UpDate, Draw and Pushed
@@ -68,7 +70,7 @@ func NewSplash() *Splash {
 		NewTextButton("EASY", xCenter, yPlaces[2], Acme.large, func() { GSM.Switch(NewGrid("bubblewrap", 7, 6)) }),
 		NewTextButton("NORMAL", xCenter, yPlaces[3], Acme.large, func() { GSM.Switch(NewGrid("bubblewrap", 0, 0)) }),
 		NewTextButton("HARD", xCenter, yPlaces[4], Acme.large, func() { GSM.Switch(NewGrid("puzzle", 0, 0)) }),
-		NewTextButton("HARDEST", xCenter, yPlaces[5], Acme.large, func() { GSM.Switch(NewGrid("puzzle", 22, 16)) }),
+		NewTextButton("HARDEST", xCenter, yPlaces[5], Acme.large, func() { GSM.Switch(NewGrid("puzzle", 18, 10)) }),
 	}
 	return s
 }
@@ -80,6 +82,10 @@ func (s *Splash) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHei
 
 // Update updates the current game state.
 func (s *Splash) Update() error {
+
+	if inpututil.IsKeyJustReleased(ebiten.KeyBackspace) {
+		os.Exit(0)
+	}
 
 	s.input.Update()
 

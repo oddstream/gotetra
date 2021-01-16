@@ -67,9 +67,9 @@ type Palette = []string
 
 // Palettes a slice of Palette
 var Palettes = []Palette{
-	{"RoyalBlue", "SteelBlue", "CornflowerBlue", "SkyBlue", "LightSteelBlue", "LightBlue"},
+	{"RoyalBlue", "SteelBlue", "CornflowerBlue", "SkyBlue", "LightSteelBlue", "LightBlue", "Navy", "PowderBlue", "Blue"},
 	{"MediumVioletRed", "DeepPink", "PaleVioletRed", "HotPink", "LightPink", "Pink"},
-	{"Gold", "Khaki", "PeachPuff", "PaleGoldenRod", "Moccasin", "PapayaWhip"},
+	{"Gold", "Khaki", "PeachPuff", "PaleGoldenRod", "Moccasin", "PapayaWhip", "DarkKhaki", "Yellow"},
 }
 
 var (

@@ -51,11 +51,11 @@ func (t *TouchStrokeSource) IsJustReleased() bool {
 type Stroke struct {
 	source StrokeSource
 
-	// initX and initY represents the position when dragging starts.
-	initX, initY int
+	// init X,Y represents the position when dragging starts.
+	init image.Point
 
-	// currentX and currentY represents the current position
-	currentX, currentY int
+	// current X,Y represents the current position
+	current image.Point
 
 	released bool
 
@@ -67,11 +67,9 @@ type Stroke struct {
 func NewStroke(source StrokeSource) *Stroke {
 	cx, cy := source.Position()
 	return &Stroke{
-		source:   source,
-		initX:    cx,
-		initY:    cy,
-		currentX: cx,
-		currentY: cy,
+		source:  source,
+		init:    image.Point{X: cx, Y: cy},
+		current: image.Point{X: cx, Y: cy},
 	}
 }
 
@@ -85,8 +83,7 @@ func (s *Stroke) Update() {
 		return
 	}
 	x, y := s.source.Position()
-	s.currentX = x
-	s.currentY = y
+	s.current = image.Point{X: x, Y: y}
 }
 
 // IsReleased returns true if ...
@@ -95,21 +92,13 @@ func (s *Stroke) IsReleased() bool {
 }
 
 // Position returns the x,y position of the cursor
-func (s *Stroke) Position() (int, int) {
-	return s.currentX, s.currentY
-}
-
-// PositionPoint returns the x,y position of the cursor as a point
-func (s *Stroke) PositionPoint() image.Point {
-	pt := image.Point{X: s.currentX, Y: s.currentY}
-	return pt
+func (s *Stroke) Position() image.Point {
+	return s.current
 }
 
 // PositionDiff returns the x,y difference between the start of the stroke and the stoke's current position
-func (s *Stroke) PositionDiff() (int, int) {
-	dx := s.currentX - s.initX
-	dy := s.currentY - s.initY
-	return dx, dy
+func (s *Stroke) PositionDiff() image.Point {
+	return s.current.Sub(s.init) // current - init
 }
 
 // DraggingObject returns a reference to the object currently being dragged
@@ -124,8 +113,7 @@ func (s *Stroke) SetDraggingObject(object interface{}) {
 
 // Input records state of mouse and touch
 type Input struct {
-	pt          image.Point
-	backPressed bool
+	pt image.Point
 }
 
 // NewInput Input object constructor
@@ -147,6 +135,4 @@ func (i *Input) Update() {
 		}
 	}
 	i.pt = image.Point{X: x, Y: y}
-
-	i.backPressed = inpututil.IsKeyJustReleased(ebiten.KeyBackspace)
 }

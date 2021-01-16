@@ -34,28 +34,33 @@ type Grid struct {
 	ud              *UserData
 	spores          []*Spore
 	colorBackground color.RGBA
-	input           *Input
 	stroke          *Stroke
 }
 
 func (g *Grid) findTile(x, y int) *Tile {
-	// for _, t := range g.tiles {
-	// 	if t.X == x && t.Y == y {
-	// 		return t
-	// 	}
+
+	// we re-order the tiles when dragging, to put the dragged tile at the top of the z-order
+	// so we can't use i := x + (y * TilesAcross) to find index of tile in slice
+	// except if this func is just used after tiles have been created
+
+	for _, t := range g.tiles {
+		if t.X == x && t.Y == y {
+			return t
+		}
+	}
+	return nil
+
+	// if x < 0 || x >= TilesAcross {
+	// 	return nil
 	// }
-	// return nil
-	if x < 0 || x >= TilesAcross {
-		return nil
-	}
-	if y < 0 || y >= TilesDown {
-		return nil
-	}
-	i := x + (y * TilesAcross)
-	if i < 0 || i > len(g.tiles) {
-		log.Fatal("findTile index out of bounds")
-	}
-	return g.tiles[i]
+	// if y < 0 || y >= TilesDown {
+	// 	return nil
+	// }
+	// i := x + (y * TilesAcross)
+	// if i < 0 || i > len(g.tiles) {
+	// 	log.Fatal("findTile index out of bounds")
+	// }
+	// return g.tiles[i]
 }
 
 // NewGrid create a Grid object
@@ -86,7 +91,7 @@ func NewGrid(m string, w, h int) *Grid {
 	// now we know the Size Of Things, tell Tile to load it's static stuff
 	initTileImages()
 
-	g := &Grid{mode: m, input: NewInput(), tiles: make([]*Tile, TilesAcross*TilesDown)}
+	g := &Grid{mode: m, tiles: make([]*Tile, TilesAcross*TilesDown)}
 	for i := range g.tiles {
 		g.tiles[i] = NewTile(g, i%TilesAcross, i/TilesAcross)
 	}
@@ -116,14 +121,27 @@ func (g *Grid) Size() (int, int) {
 	return TilesAcross * TileSize, TilesDown * TileSize
 }
 
-// FindTileAt finds the tile under the mouse click or touch
-func (g *Grid) FindTileAt(pt image.Point) *Tile {
+// findTileAt finds the tile under the mouse click or touch
+func (g *Grid) findTileAt(pt image.Point) *Tile {
 	for _, t := range g.tiles {
 		if InRect(pt, t.Rect) {
 			return t
 		}
 	}
 	return nil
+}
+
+func (g *Grid) moveTileToFront(t *Tile) {
+	index := -1
+	for i, t0 := range g.tiles {
+		if t0 == t {
+			index = i
+			break
+		}
+	}
+	// https://github.com/golang/go/wiki/SliceTricks
+	g.tiles = append(g.tiles[:index], g.tiles[index+1:]...)
+	g.tiles = append(g.tiles, t)
 }
 
 func (g *Grid) findUnsectionedTile() *Tile {
@@ -247,6 +265,10 @@ func (g *Grid) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 // Update the board state (transitions, user input)
 func (g *Grid) Update() error {
 
+	if inpututil.IsKeyJustReleased(ebiten.KeyBackspace) {
+		GSM.Switch(NewSplash())
+	}
+
 	var s *Stroke
 
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
@@ -258,11 +280,12 @@ func (g *Grid) Update() error {
 	}
 
 	if s != nil {
-		t := g.FindTileAt(s.PositionPoint())
+		t := g.findTileAt(s.Position())
 		if t.state == TileSettled {
 			g.stroke = s
 			t.state = TileBeingDragged
 			g.stroke.SetDraggingObject(t)
+			g.moveTileToFront(t)
 		}
 	}
 
@@ -272,17 +295,25 @@ func (g *Grid) Update() error {
 
 		{
 			t := g.stroke.DraggingObject().(*Tile)
-			dx, dy := g.stroke.PositionDiff()
-			t.offsetX = float64(dx)
-			t.offsetY = float64(dy)
+			pt := g.stroke.PositionDiff()
+			t.offsetX = float64(pt.X)
+			t.offsetY = float64(pt.Y)
 		}
 
 		if g.stroke.IsReleased() {
 
 			src := g.stroke.DraggingObject().(*Tile)
-			dst := g.FindTileAt(g.stroke.PositionPoint())
+			if src == nil {
+				panic("no tile being dragged")
+			}
+			dst := g.findTileAt(g.stroke.Position())
 
-			if src == dst {
+			if dst == nil {
+				// being dragged off screen
+				// beware: tile will use offsetX,Y
+				src.state = TileReturning
+			} else if src == dst {
+				// treat this like a tap
 				src.offsetX, src.offsetY = 0, 0 // snap back home
 				src.state = TileSettled         // otherwise Tile won't rotate
 				if g.IsComplete() {
@@ -296,8 +327,11 @@ func (g *Grid) Update() error {
 				dst.color = src.color
 				dst.section = src.section
 				dst.tileImage = tileImageLibrary[dst.coins]
+				dst.state = TileSettled
 
 				src.coins = 0
+				src.color = colorUnsectioned
+				src.section = 0
 				src.tileImage = tileImageLibrary[0]
 				src.offsetX, src.offsetY = 0, 0
 				src.state = TileSettled

@@ -6,6 +6,8 @@ $ GOOS=js GOARCH=wasm go build -o ../serve/main.wasm
 ! In go, the idiomatic way to represent an empty and useless value is struct{}{}
 ! struct{} is a type, struct{}{} is an expression
 
+Rename Input (used by Label & TextButton) to Tap
+Expand palettes
 IsSectionComplete/IsCompleteSection
 Use composition (no explicit field name)
 Use embedding
@@ -18,6 +20,7 @@ WASM on https://oddstream.games
 Android
 Dominos mode
 Understand ebiten's use of build flags "// +build example" https://dave.cheney.net/2013/10/12/how-to-use-conditional-compilation-with-the-go-build-tool
+Wait for //go:embed
 Boid's use of Vector2D
 Class for a collection of spores? Then could flock them
 expand colors.go to all web colors (will be useful one day)
@@ -34,6 +37,8 @@ Jigsaw mode
 - drag target must be a grid slot with coins == 0
 - just one stroke will do, no need for map of struct{}{}
 
+x Move the dragged tile to the front
+x Convert Stroke to image.Point
 x allow dragging tiles (prep for jigsaw mode)
 x QuadraticTo() or CubicTo() curves when creating tiles
 x Draw tilesheet using https://github.com/fogleman/gg
