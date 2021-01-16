@@ -40,6 +40,8 @@ const (
 
 var (
 	tileImageLibrary map[uint]*ebiten.Image
+	overSize         float64
+	halfTileSize     float64
 )
 
 func initTileImages() {
@@ -52,9 +54,13 @@ func initTileImages() {
 	tileImageLibrary = make(map[uint]*ebiten.Image, 16)
 	for i := uint(0); i < 16; i++ {
 		img := makeTileCurvy(i, TileSize)
-		// gg.Image() returns an *image.RGBA
 		tileImageLibrary[i] = ebiten.NewImageFromImage(img)
 	}
+
+	// the tiles are all the same size, so pre-calc some useful variables
+	actualTileSize, _ := tileImageLibrary[0].Size()
+	halfTileSize = float64(actualTileSize) / 2
+	overSize = float64((actualTileSize - TileSize) / 2)
 }
 
 // Tile object describes a tile
@@ -360,16 +366,12 @@ func (t *Tile) Draw(screen *ebiten.Image) {
 
 	// scale, point translation, rotate, object translation
 
-	actualWidth, actualHeight := t.tileImage.Size()
-	overX, overY := float64((actualWidth-TileSize)/2), float64((actualHeight-TileSize)/2) // TODO WTF
-	halfSize := float64(actualWidth) / 2
-
 	op := &ebiten.DrawImageOptions{}
 
 	if t.currDegrees != 0 {
-		op.GeoM.Translate(-halfSize, -halfSize)
+		op.GeoM.Translate(-halfTileSize, -halfTileSize)
 		op.GeoM.Rotate(float64(t.currDegrees) * 3.1415926535 / 180.0)
-		op.GeoM.Translate(halfSize, halfSize)
+		op.GeoM.Translate(halfTileSize, halfTileSize)
 	}
 
 	// Reset RGB (not Alpha) forcibly
@@ -387,10 +389,10 @@ func (t *Tile) Draw(screen *ebiten.Image) {
 
 	if t.state == TileShrinking || t.state == TileShrunk || t.state == TileGrowing {
 		// first move the origin to the center of the tile
-		op.GeoM.Translate(-halfSize, -halfSize)
+		op.GeoM.Translate(-halfTileSize, -halfTileSize)
 		op.GeoM.Scale(t.scale, t.scale)
 		// then move the origin back to top left
-		op.GeoM.Translate(halfSize, halfSize)
+		op.GeoM.Translate(halfTileSize, halfTileSize)
 	}
 
 	/*
@@ -401,10 +403,8 @@ func (t *Tile) Draw(screen *ebiten.Image) {
 		2             &&
 		1             ||
 	*/
-	// x := float64(LeftMargin + t.X*TileSize)
-	// y := float64(TopMargin + t.Y*TileSize)
 
-	op.GeoM.Translate(t.homeX-overX+t.offsetX, t.homeY-overY+t.offsetY)
+	op.GeoM.Translate(t.homeX-overSize+t.offsetX, t.homeY-overSize+t.offsetY)
 
 	// if t.X%2 == 0 && t.Y%2 == 0 {
 	// 	colorTransBlack := color.RGBA{R: 0, G: 0, B: 0, A: 0x10}

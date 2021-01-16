@@ -6,11 +6,11 @@ $ GOOS=js GOARCH=wasm go build -o ../serve/main.wasm
 ! In go, the idiomatic way to represent an empty and useless value is struct{}{}
 ! struct{} is a type, struct{}{} is an expression
 
+Anonymous fields/embedding (blue book p144-6)
+https://pkg.go.dev/github.com/hajimehoshi/ebiten/v2/vector (no line width or endcaps)
 Rename Input (used by Label & TextButton) to Tap
 Expand palettes
 IsSectionComplete/IsCompleteSection
-Use composition (no explicit field name)
-Use embedding
 Use overloading
 Only Update returns an error, NOT Draw or Layout
 make Input smarter (using Pushable interface?)

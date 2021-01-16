@@ -11,7 +11,7 @@ import (
 	"log"
 
 	// load png decoder in main package
-	_ "image/png"
+	// _ "image/png"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	tetra "oddstream.games/tetra/tetra"
