@@ -72,7 +72,7 @@ func makeTilesheet(tileSize, shapeSize int) image.Image {
 // return an image.Image that is bigger than the tile size requested so endcaps are visible
 func makeTile(coins uint, tileSize int) image.Image {
 
-	tileSizeEx := tileSize + 100
+	tileSizeEx := tileSize + (tileSize / 6) // same as linewidth
 
 	margin := float64(tileSizeEx-tileSize) / 2
 	center := float64(tileSizeEx / 2)

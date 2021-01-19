@@ -6,11 +6,23 @@ $ GOOS=js GOARCH=wasm go build -o ../serve/main.wasm
 ! In go, the idiomatic way to represent an empty and useless value is struct{}{}
 ! struct{} is a type, struct{}{} is an expression
 
+/*
+    Precedence    Operator
+    5             *  /  %  <<  >>  &  &^
+    4             +  -  |  ^
+    3             ==  !=  <  <=  >  >=
+    2             &&
+    1             ||
+*/
+
+Keep rotating (slowly) until coins match? Two adjacent ones may never match. Tap again to stop (at next mod 90).
+Rotate 90, and if there's nothing to match with, rotate again?
+Day/night cycle
+Create spores (circles) and flock them. When? Why?
 Anonymous fields/embedding (blue book p144-6)
 https://pkg.go.dev/github.com/hajimehoshi/ebiten/v2/vector (no line width or endcaps)
 Rename Input (used by Label & TextButton) to Tap
 Expand palettes
-IsSectionComplete/IsCompleteSection
 Use overloading
 Only Update returns an error, NOT Draw or Layout
 make Input smarter (using Pushable interface?)
@@ -21,8 +33,6 @@ Android
 Dominos mode
 Understand ebiten's use of build flags "// +build example" https://dave.cheney.net/2013/10/12/how-to-use-conditional-compilation-with-the-go-build-tool
 Wait for //go:embed
-Boid's use of Vector2D
-Class for a collection of spores? Then could flock them
 expand colors.go to all web colors (will be useful one day)
 Sound
 func SetWindowIcon()
@@ -37,6 +47,9 @@ Jigsaw mode
 - drag target must be a grid slot with coins == 0
 - just one stroke will do, no need for map of struct{}{}
 
+x IsSectionComplete/IsCompleteSection
+x Spores renamed to Frags
+x Class for a collection of spores? Then could flock them
 x Move the dragged tile to the front
 x Convert Stroke to image.Point
 x allow dragging tiles (prep for jigsaw mode)

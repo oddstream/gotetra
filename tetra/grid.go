@@ -32,7 +32,7 @@ type Grid struct {
 	palette         Palette
 	colors          []*color.RGBA // a slice of pointers to colors for the tiles, one color per section
 	ud              *UserData
-	spores          []*Spore
+	frags           []*Frag
 	colorBackground color.RGBA
 	stroke          *Stroke
 }
@@ -111,7 +111,7 @@ func NewGrid(m string, w, h int) *Grid {
 	g.ud.Level-- // TODO this is ugly, maybe .CompletedLevel?
 	g.NextLevel()
 
-	g.spores = make([]*Spore, 0, TilesAcross*TilesDown)
+	g.frags = make([]*Frag, 0, TilesAcross*TilesDown)
 
 	return g
 }
@@ -190,7 +190,7 @@ func (g *Grid) ColorTiles() {
 func (g *Grid) IsSectionComplete(section int) bool {
 	for _, t := range g.tiles {
 		if t.section == section {
-			if !t.IsCompleteSection(section) {
+			if !t.IsSectionComplete(section) {
 				return false
 			}
 		}
@@ -237,8 +237,9 @@ func (g *Grid) NextLevel() {
 	rand.Seed(int64(g.ud.Level))
 
 	for _, t := range g.tiles {
-		t.PlaceCoin()
+		t.PlaceRandomCoins()
 	}
+
 	g.palette = Palettes[rand.Int()%len(Palettes)]
 	g.colorBackground = CalcBackgroundColor(g.palette)
 	g.ColorTiles()
@@ -248,13 +249,13 @@ func (g *Grid) NextLevel() {
 	}
 }
 
-// AddSpore to map of spores
-func (g *Grid) AddSpore(x, y int, img *ebiten.Image, deg int, col color.RGBA) {
+// AddFrag to map of frags
+func (g *Grid) AddFrag(x, y int, img *ebiten.Image, deg int, col color.RGBA) {
 	// convert X,Y into screen coords of tile center
 	xScreen := LeftMargin + (x * TileSize) + (TileSize / 2)
 	yScreen := TopMargin + (y * TileSize) + (TileSize / 2)
-	sp := NewSpore(float64(xScreen), float64(yScreen), img, float64(deg), col)
-	g.spores = append(g.spores, sp)
+	sp := NewFrag(float64(xScreen), float64(yScreen), img, float64(deg), col)
+	g.frags = append(g.frags, sp)
 }
 
 // Layout implements ebiten.Game's Layout.
@@ -372,18 +373,18 @@ func (g *Grid) Update() error {
 		t.Update()
 	}
 
-	for _, sp := range g.spores {
+	for _, sp := range g.frags {
 		sp.Update()
 	}
 
 	{
-		newSpores := make([]*Spore, 0, len(g.spores))
-		for _, sp := range g.spores {
+		newFrags := make([]*Frag, 0, len(g.frags))
+		for _, sp := range g.frags {
 			if sp.IsVisible() {
-				newSpores = append(newSpores, sp)
+				newFrags = append(newFrags, sp)
 			}
 		}
-		g.spores = newSpores
+		g.frags = newFrags
 	}
 
 	return nil
@@ -408,7 +409,7 @@ func (g *Grid) Draw(screen *ebiten.Image) {
 		text.Draw(screen, str, Acme.huge, x, y, colorTransBlack)
 	}
 
-	for _, sp := range g.spores {
+	for _, sp := range g.frags {
 		sp.Draw(screen)
 	}
 
@@ -416,6 +417,6 @@ func (g *Grid) Draw(screen *ebiten.Image) {
 		t.Draw(screen)
 	}
 
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("%d,%d grid of size %d, %d spores", TilesAcross, TilesDown, TileSize, len(g.spores)))
+	ebitenutil.DebugPrint(screen, fmt.Sprintf("%d,%d grid of size %d, %d frags", TilesAcross, TilesDown, TileSize, len(g.frags)))
 
 }

@@ -3,6 +3,7 @@
 package tetra
 
 import (
+	"image"
 	"image/color"
 	"log"
 	"math/rand"
@@ -51,9 +52,10 @@ func initTileImages() {
 		log.Fatal("Tile dimensions not set")
 	}
 
+	var makeFunc func(uint, int) image.Image = makeTileCurvy
 	tileImageLibrary = make(map[uint]*ebiten.Image, 16)
 	for i := uint(0); i < 16; i++ {
-		img := makeTileCurvy(i, TileSize)
+		img := makeFunc(i, TileSize)
 		tileImageLibrary[i] = ebiten.NewImageFromImage(img)
 	}
 
@@ -104,8 +106,8 @@ func (t *Tile) Reset() {
 	t.SetImage()               // reset to a blank tile image, will set state
 }
 
-// PlaceCoin sets up a random config for this tile
-func (t *Tile) PlaceCoin() {
+// PlaceRandomCoins sets up a random config for this tile
+func (t *Tile) PlaceRandomCoins() {
 	bits := [4]uint{NORTH, EAST, SOUTH, WEST}
 	opps := [4]uint{SOUTH, WEST, NORTH, EAST}
 	links := [4]*Tile{t.N, t.E, t.S, t.W}
@@ -191,18 +193,41 @@ func unshiftBits(num uint) uint {
 // Jumble shifts the bits in the tile a random number of times
 func (t *Tile) Jumble() {
 	r := rand.Float64()
-	if r < 0.25 {
+	if r < 0.1 {
+		// rarely have to tap three times
 		t.coins = shiftBits(t.coins)
-	} else if r < 0.5 {
+	} else if r > 0.8 {
+		// sometimes have to tap twice
+		t.coins = shiftBits(t.coins)
+		t.coins = shiftBits(t.coins)
+	} else {
+		// mostly have to tap once
 		t.coins = unshiftBits(t.coins)
-	} else if r < 0.75 {
-		t.coins = shiftBits(t.coins)
-		t.coins = shiftBits(t.coins)
 	}
 	// TODO remove debugging jumble before release
 	// if t.coins == NORTH || t.coins == SOUTH {
 	// 	t.coins = unshiftBits(t.coins)
 	// }
+}
+
+// if this tile had coins, how many points of connection would there be?
+func (t Tile) bitsConnected(coins uint) int {
+	var connected = func(dir uint, link *Tile, oppdir uint) int {
+		if coins&dir == dir {
+			if link != nil {
+				if link.coins&oppdir == oppdir {
+					return 1
+				}
+			}
+		}
+		return 0
+	}
+	var count int
+	count += connected(NORTH, t.N, SOUTH)
+	count += connected(EAST, t.E, WEST)
+	count += connected(SOUTH, t.S, NORTH)
+	count += connected(WEST, t.W, EAST)
+	return count
 }
 
 // Rotate shifts the tile 90 degrees clockwise
@@ -230,31 +255,31 @@ func (t *Tile) IsComplete() bool {
 	if 0 == t.coins {
 		return true
 	}
-	if (t.coins & NORTH) == NORTH {
-		if (t.N == nil) || ((t.N.coins & SOUTH) == 0) {
-			return false
+	var test = func(dir uint, link *Tile, oppdir uint) bool {
+		if (t.coins & dir) == dir {
+			if (link == nil) || (link.coins&oppdir) == 0 {
+				return false
+			}
 		}
+		return true
 	}
-	if (t.coins & EAST) == EAST {
-		if (t.E == nil) || ((t.E.coins & WEST) == 0) {
-			return false
-		}
+	if !test(NORTH, t.N, SOUTH) {
+		return false
 	}
-	if (t.coins & SOUTH) == SOUTH {
-		if (t.S == nil) || ((t.S.coins & NORTH) == 0) {
-			return false
-		}
+	if !test(EAST, t.E, WEST) {
+		return false
 	}
-	if (t.coins & WEST) == WEST {
-		if (t.W == nil) || ((t.W.coins & EAST) == 0) {
-			return false
-		}
+	if !test(SOUTH, t.S, NORTH) {
+		return false
+	}
+	if !test(WEST, t.W, EAST) {
+		return false
 	}
 	return true
 }
 
-// IsCompleteSection returns true if the tile aligns properly with it's neighbours
-func (t *Tile) IsCompleteSection(section int) bool {
+// IsSectionComplete returns true if the tile aligns properly with it's neighbours
+func (t *Tile) IsSectionComplete(section int) bool {
 	// By design, Go does not support optional parameters, default parameter values, or method overloading.
 	if t.state != TileSettled {
 		return false
@@ -265,25 +290,25 @@ func (t *Tile) IsCompleteSection(section int) bool {
 	if section != t.section {
 		return false
 	}
-	if (t.coins & NORTH) == NORTH {
-		if (t.N == nil) || (t.N.section != section) || ((t.N.coins & SOUTH) == 0) {
-			return false
+	var test = func(dir uint, link *Tile, oppdir uint) bool {
+		if (t.coins & dir) == dir {
+			if (link == nil) || (link.section != section) || (link.coins&oppdir) == 0 {
+				return false
+			}
 		}
+		return true
 	}
-	if (t.coins & EAST) == EAST {
-		if (t.E == nil) || (t.E.section != section) || ((t.E.coins & WEST) == 0) {
-			return false
-		}
+	if !test(NORTH, t.N, SOUTH) {
+		return false
 	}
-	if (t.coins & SOUTH) == SOUTH {
-		if (t.S == nil) || (t.S.section != section) || ((t.S.coins & NORTH) == 0) {
-			return false
-		}
+	if !test(EAST, t.E, WEST) {
+		return false
 	}
-	if (t.coins & WEST) == WEST {
-		if (t.W == nil) || (t.W.section != section) || ((t.W.coins & EAST) == 0) {
-			return false
-		}
+	if !test(SOUTH, t.S, NORTH) {
+		return false
+	}
+	if !test(WEST, t.W, EAST) {
+		return false
 	}
 	return true
 }
@@ -318,7 +343,7 @@ func (t *Tile) Update() error {
 			t.state = TileShrunk
 		}
 	case TileRotating:
-		t.currDegrees += 5
+		t.currDegrees += 10
 		if t.currDegrees >= 360 {
 			t.currDegrees = 0
 		}
@@ -329,7 +354,7 @@ func (t *Tile) Update() error {
 			}
 		}
 	case TileShrunk:
-		t.G.AddSpore(t.X, t.Y, t.tileImage, t.currDegrees, t.color)
+		t.G.AddFrag(t.X, t.Y, t.tileImage, t.currDegrees, t.color)
 		t.Reset()
 	case TileBeingDragged:
 		// nothing to do
@@ -346,10 +371,11 @@ func (t *Tile) Update() error {
 	return nil
 }
 
-func (t *Tile) debugText(screen *ebiten.Image, str string, x, y float64) {
+func (t *Tile) debugText(screen *ebiten.Image, str string) {
 	bound, _ := font.BoundString(Acme.small, str)
 	w := (bound.Max.X - bound.Min.X).Ceil()
 	h := (bound.Max.Y - bound.Min.Y).Ceil()
+	x, y := t.homeX-overSize+t.offsetX, t.homeY-overSize+t.offsetY
 	tx := int(x) + (TileSize-w)/2
 	ty := int(y) + (TileSize-h)/2 + h
 	var c color.Color
@@ -358,6 +384,7 @@ func (t *Tile) debugText(screen *ebiten.Image, str string, x, y float64) {
 	} else {
 		c = BasicColors["Purple"]
 	}
+	// ebitenutil.DrawRect(screen, float64(tx), float64(ty), float64(w), float64(h), c)
 	text.Draw(screen, str, Acme.small, tx, ty, c)
 }
 
@@ -395,15 +422,6 @@ func (t *Tile) Draw(screen *ebiten.Image) {
 		op.GeoM.Translate(halfTileSize, halfTileSize)
 	}
 
-	/*
-		Precedence    Operator
-		5             *  /  %  <<  >>  &  &^
-		4             +  -  |  ^
-		3             ==  !=  <  <=  >  >=
-		2             &&
-		1             ||
-	*/
-
 	op.GeoM.Translate(t.homeX-overSize+t.offsetX, t.homeY-overSize+t.offsetY)
 
 	// if t.X%2 == 0 && t.Y%2 == 0 {
@@ -413,6 +431,8 @@ func (t *Tile) Draw(screen *ebiten.Image) {
 
 	screen.DrawImage(t.tileImage, op)
 
-	// t.debugText(gridImage, fmt.Sprint(t.state), x, y)
-	// t.debugText(gridImage, fmt.Sprintf("%04b", t.coins), x, y)
+	// t.debugText(gridImage, fmt.Sprint(t.state))
+	// t.debugText(gridImage, fmt.Sprintf("%04b", t.coins))
+	// t.debugText(screen, fmt.Sprintf("%v", t.currDegrees))
+	// t.debugText(screen, fmt.Sprintf("%v", t.bitsConnected(t.coins)))
 }
