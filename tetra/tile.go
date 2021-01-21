@@ -34,6 +34,7 @@ const (
 	TileGrowing
 	TileShrinking
 	TileRotating
+	TileUnrotating
 	TileShrunk
 	TileBeingDragged
 	TileReturning
@@ -238,11 +239,44 @@ func (t *Tile) Rotate() {
 	}
 
 	t.coins = shiftBits(t.coins)
-	t.targDegrees = t.currDegrees + 90
-	if t.targDegrees >= 360 {
+	switch t.currDegrees {
+	case 0:
+		t.targDegrees = 90
+	case 90:
+		t.targDegrees = 180
+	case 180:
+		t.targDegrees = 270
+	case 270:
 		t.targDegrees = 0
+	default:
+		println(t.currDegrees)
 	}
 	t.state = TileRotating
+}
+
+// Unrotate shifts the tile 90 degrees anticlockwise
+func (t *Tile) Unrotate() {
+	if 0 == t.coins {
+		return
+	}
+	if t.state != TileSettled {
+		return
+	}
+
+	t.coins = unshiftBits(t.coins)
+	switch t.currDegrees {
+	case 0:
+		t.targDegrees = 270
+	case 90:
+		t.targDegrees = 0
+	case 180:
+		t.targDegrees = 90
+	case 270:
+		t.targDegrees = 180
+	default:
+		println(t.currDegrees)
+	}
+	t.state = TileUnrotating
 }
 
 // IsComplete returns true if the tile aligns properly with it's neighbours
@@ -349,8 +383,20 @@ func (t *Tile) Update() error {
 		}
 	case TileRotating:
 		t.currDegrees += 10
-		if t.currDegrees >= 360 {
-			t.currDegrees = 0
+		t.currDegrees = t.currDegrees % 360
+		// if t.currDegrees >= 360 {
+		// 	t.currDegrees = 0
+		// }
+		if t.currDegrees == t.targDegrees {
+			t.state = TileSettled
+			if t.G.IsSectionComplete(t.section) {
+				t.G.FilterSection((*Tile).TriggerScaleDown, t.section)
+			}
+		}
+	case TileUnrotating:
+		t.currDegrees -= 10
+		if t.currDegrees < 0 {
+			t.currDegrees = 350
 		}
 		if t.currDegrees == t.targDegrees {
 			t.state = TileSettled

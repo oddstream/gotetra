@@ -277,6 +277,22 @@ func (g *Grid) Update() error {
 		GSM.Switch(NewSplash())
 	}
 
+	if g.stroke == nil {
+		_, yoff := ebiten.Wheel()
+		if yoff != 0 {
+			x, y := ebiten.CursorPosition()
+			t := g.findTileAt(image.Point{X: x, Y: y})
+			if t != nil {
+				if yoff < 0 {
+					t.Rotate()
+				} else {
+					t.Unrotate()
+				}
+			}
+			return nil
+		}
+	}
+
 	var s *Stroke
 
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
