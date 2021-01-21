@@ -66,14 +66,16 @@ func (g *Grid) findTile(x, y int) *Tile {
 // NewGrid create a Grid object
 func NewGrid(m string, w, h int) *Grid {
 
+	screenWidth, screenHeight := ebiten.WindowSize()
+
 	if w == 0 || h == 0 {
 		TileSize = 100
-		TilesAcross, TilesDown = ScreenWidth/TileSize, ScreenHeight/TileSize
+		TilesAcross, TilesDown = screenWidth/TileSize, screenHeight/TileSize
 	} else {
-		possibleW := ScreenWidth / (w + 1) // add 1 to create margin for endcaps
+		possibleW := screenWidth / (w + 1) // add 1 to create margin for endcaps
 		possibleW /= 20
 		possibleW *= 20
-		possibleH := ScreenHeight / (h + 1)
+		possibleH := screenHeight / (h + 1)
 		possibleH /= 20
 		possibleH *= 20
 		// golang gotcha there isn't a vanilla math.MinInt()
@@ -85,8 +87,8 @@ func NewGrid(m string, w, h int) *Grid {
 		println("TileSize", TileSize)
 		TilesAcross, TilesDown = w, h
 	}
-	LeftMargin = (ScreenWidth - (TilesAcross * TileSize)) / 2
-	TopMargin = (ScreenHeight - (TilesDown * TileSize)) / 2
+	LeftMargin = (screenWidth - (TilesAcross * TileSize)) / 2
+	TopMargin = (screenHeight - (TilesDown * TileSize)) / 2
 
 	// now we know the Size Of Things, tell Tile to load it's static stuff
 	initTileImages()
@@ -259,8 +261,13 @@ func (g *Grid) AddFrag(x, y int, img *ebiten.Image, deg int, col color.RGBA) {
 }
 
 // Layout implements ebiten.Game's Layout.
-func (g *Grid) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return ScreenWidth, ScreenHeight
+func (g *Grid) Layout(outsideWidth, outsideHeight int) (int, int) {
+	LeftMargin = (outsideWidth - (TilesAcross * TileSize)) / 2
+	TopMargin = (outsideHeight - (TilesDown * TileSize)) / 2
+	for _, t := range g.tiles {
+		t.Layout()
+	}
+	return outsideWidth, outsideHeight
 }
 
 // Update the board state (transitions, user input)
@@ -282,7 +289,7 @@ func (g *Grid) Update() error {
 
 	if s != nil {
 		t := g.findTileAt(s.Position())
-		if t.state == TileSettled {
+		if t != nil && t.state == TileSettled {
 			g.stroke = s
 			t.state = TileBeingDragged
 			g.stroke.SetDraggingObject(t)

@@ -47,6 +47,7 @@ Jigsaw mode
 - drag target must be a grid slot with coins == 0
 - just one stroke will do, no need for map of struct{}{}
 
+x Resizeable window
 x IsSectionComplete/IsCompleteSection
 x Spores renamed to Frags
 x Class for a collection of spores? Then could flock them

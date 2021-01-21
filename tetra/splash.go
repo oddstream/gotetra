@@ -16,20 +16,21 @@ import (
 type Widget interface {
 	Update() error
 	Draw(*ebiten.Image)
+	SetPosition(int, int)
 	Rect() (int, int, int, int)
 	Pushed(*Input) bool
 	Action()
 }
 
 // Pushable type implements Rect
-type Pushable interface {
-	Rect() (int, int, int, int)
-}
+// type Pushable interface {
+// 	Rect() (int, int, int, int)
+// }
 
 // Splash represents a game state.
 type Splash struct {
 	logoImage *ebiten.Image
-	pos       image.Point
+	logoPos   image.Point
 	widgets   []Widget
 	input     *Input
 }
@@ -57,27 +58,37 @@ func NewSplash() *Splash {
 	}
 	s.logoImage = ebiten.NewImageFromImage(img)
 
-	sx, sy := s.logoImage.Size()
-	s.pos = image.Point{X: (ScreenWidth - sx) / 2, Y: -sy}
-
-	xCenter := ScreenWidth / 2
-
-	yPlaces := [6]int{}
-	for i := 0; i < 6; i++ {
-		yPlaces[i] = (ScreenHeight / 6) * i
-	}
 	s.widgets = []Widget{
-		NewTextButton("EASY", xCenter, yPlaces[2], Acme.large, func() { GSM.Switch(NewGrid("bubblewrap", 7, 6)) }),
-		NewTextButton("NORMAL", xCenter, yPlaces[3], Acme.large, func() { GSM.Switch(NewGrid("bubblewrap", 0, 0)) }),
-		NewTextButton("HARD", xCenter, yPlaces[4], Acme.large, func() { GSM.Switch(NewGrid("puzzle", 0, 0)) }),
-		NewTextButton("HARDEST", xCenter, yPlaces[5], Acme.large, func() { GSM.Switch(NewGrid("puzzle", 18, 10)) }),
+		NewLabel("T E T R A                      L O O P S", Acme.large),
+		NewTextButton("EASY", Acme.large, func() { GSM.Switch(NewGrid("bubblewrap", 7, 6)) }),
+		NewTextButton("NORMAL", Acme.large, func() { GSM.Switch(NewGrid("bubblewrap", 0, 0)) }),
+		NewTextButton("HARD", Acme.large, func() { GSM.Switch(NewGrid("puzzle", 0, 0)) }),
+		NewTextButton("HARDEST", Acme.large, func() { GSM.Switch(NewGrid("puzzle", 18, 10)) }),
 	}
+
 	return s
 }
 
 // Layout implements ebiten.Game's Layout
-func (s *Splash) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return ScreenWidth, ScreenHeight
+func (s *Splash) Layout(outsideWidth, outsideHeight int) (int, int) {
+
+	screenWidth, screenHeight := ebiten.WindowSize()
+
+	xCenter := screenWidth / 2
+	// create 6 vertical slots for 5 widgets
+	yPlaces := [6]int{} // golang gotcha: can't use len(s.widgets)
+	for i := 0; i < len(yPlaces); i++ {
+		yPlaces[i] = (screenHeight / len(yPlaces)) * i
+	}
+
+	lx, ly := s.logoImage.Size()
+	s.logoPos = image.Point{X: xCenter - (lx / 2), Y: yPlaces[1] - (ly / 2)}
+
+	for i, w := range s.widgets {
+		w.SetPosition(xCenter, yPlaces[i+1])
+	}
+
+	return outsideWidth, outsideHeight
 }
 
 // Update updates the current game state.
@@ -88,10 +99,6 @@ func (s *Splash) Update() error {
 	}
 
 	s.input.Update()
-
-	if s.pos.Y < 0 {
-		s.pos.Y++
-	}
 
 	for _, w := range s.widgets {
 		if w.Pushed(s.input) {
@@ -108,8 +115,16 @@ func (s *Splash) Draw(screen *ebiten.Image) {
 	screen.Fill(colorBackground)
 
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(s.pos.X), float64(s.pos.Y))
-	screen.DrawImage(s.logoImage, op)
+	{
+		sx, sy := s.logoImage.Size()
+		sx, sy = sx/2, sy/2
+		op.GeoM.Translate(float64(-sx), float64(-sy))
+		op.GeoM.Scale(0.5, 0.5)
+		op.GeoM.Translate(float64(sx), float64(sy))
+
+		op.GeoM.Translate(float64(s.logoPos.X), float64(s.logoPos.Y))
+		screen.DrawImage(s.logoImage, op)
+	}
 
 	for _, d := range s.widgets {
 		d.Draw(screen)

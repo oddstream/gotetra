@@ -19,13 +19,22 @@ type Label struct {
 }
 
 // NewLabel creates and returns a new Label object centered at x,y
-func NewLabel(str string, x, y int, btnFont font.Face) *Label {
-	l := &Label{text: str, center: image.Point{X: x, Y: y}, font: btnFont}
+func NewLabel(str string, btnFont font.Face) *Label {
+	l := &Label{text: str, font: btnFont}
 	bound, _ := font.BoundString(l.font, l.text)
 	l.width = (bound.Max.X - bound.Min.X).Ceil()
 	l.height = (bound.Max.Y - bound.Min.Y).Ceil()
 	l.origin = image.Point{X: l.center.X - (l.width / 2), Y: l.center.Y - (l.height / 2)}
 	return l
+}
+
+// SetPosition sets the position of this widget in screen coords
+func (l *Label) SetPosition(x, y int) {
+	l.center = image.Point{X: x, Y: y}
+	bound, _ := font.BoundString(l.font, l.text)
+	l.width = (bound.Max.X - bound.Min.X).Ceil()
+	l.height = (bound.Max.Y - bound.Min.Y).Ceil()
+	l.origin = image.Point{X: l.center.X - (l.width / 2), Y: l.center.Y - (l.height / 2)}
 }
 
 // Rect gives the x,y coords of the label's top left and bottom right corners, in screen coordinates

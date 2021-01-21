@@ -22,8 +22,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	ebiten.SetWindowSize(tetra.ScreenWidth, tetra.ScreenHeight)
-	ebiten.SetWindowTitle("Tetra")
+	ebiten.SetWindowTitle("Tetra Loops")
+	ebiten.SetWindowSize(1920/2, 1080/2)
+	ebiten.SetWindowResizable(true)
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}

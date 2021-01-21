@@ -20,13 +20,18 @@ type TextButton struct {
 }
 
 // NewTextButton creates and returns a new TextButton object centered at x,y
-func NewTextButton(str string, x, y int, btnFont font.Face, actionFn func()) *TextButton {
-	tb := &TextButton{text: str, center: image.Point{X: x, Y: y}, font: btnFont, action: actionFn}
+func NewTextButton(str string, btnFont font.Face, actionFn func()) *TextButton {
+	tb := &TextButton{text: str, font: btnFont, action: actionFn}
+	return tb
+}
+
+// SetPosition sets the position of this widget in screen coords
+func (tb *TextButton) SetPosition(x, y int) {
+	tb.center = image.Point{X: x, Y: y}
 	bound, _ := font.BoundString(tb.font, tb.text)
 	tb.width = (bound.Max.X - bound.Min.X).Ceil()
 	tb.height = (bound.Max.Y - bound.Min.Y).Ceil()
 	tb.origin = image.Point{X: tb.center.X - (tb.width / 2), Y: tb.center.Y - (tb.height / 2)}
-	return tb
 }
 
 // Rect gives the x,y coords of the TextButton's top left and bottom right corners, in screen coordinates

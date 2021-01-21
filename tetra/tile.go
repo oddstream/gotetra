@@ -91,9 +91,7 @@ type Tile struct {
 // all new tiles start in a shrunken state
 func NewTile(g *Grid, x, y int) *Tile {
 	t := &Tile{G: g, X: x, Y: y, scale: MinimumScale, color: colorUnsectioned}
-	t.homeX = float64(LeftMargin + t.X*TileSize)
-	t.homeY = float64(TopMargin + t.Y*TileSize)
-	t.offsetX, t.offsetY = 0, 0
+	// homeX, homeY, offsetX, offsetY will be (re)set by Layout()
 	// coins and section will be 0
 	return t
 }
@@ -318,6 +316,13 @@ func (t *Tile) TriggerScaleDown() {
 	if t.coins != 0 {
 		t.state = TileShrinking
 	}
+}
+
+// Layout the tile
+func (t *Tile) Layout() {
+	t.homeX = float64(LeftMargin + t.X*TileSize)
+	t.homeY = float64(TopMargin + t.Y*TileSize)
+	t.offsetX, t.offsetY = 0, 0
 }
 
 // Update the tile state (transitions, user input)

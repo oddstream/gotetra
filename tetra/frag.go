@@ -51,7 +51,8 @@ func NewFrag(x, y float64, imgSrc *ebiten.Image, currDegrees float64, c color.RG
 
 // IsVisible returns true if frag is still visible
 func (f *Frag) IsVisible() bool {
-	return f.xCenter > 0 && f.xCenter < ScreenWidth && f.yCenter > 0 && f.yCenter < ScreenHeight
+	screenWidth, screenHeight := ebiten.WindowSize()
+	return f.xCenter > 0 && f.xCenter < float64(screenWidth) && f.yCenter > 0 && f.yCenter < float64(screenHeight)
 }
 
 // Update the position of this Frag
