@@ -44,6 +44,7 @@ var (
 	tileImageLibrary map[uint]*ebiten.Image
 	overSize         float64
 	halfTileSize     float64
+	nextNote         int
 )
 
 func initTileImages() {
@@ -64,6 +65,17 @@ func initTileImages() {
 	actualTileSize, _ := tileImageLibrary[0].Size()
 	halfTileSize = float64(actualTileSize) / 2
 	overSize = float64((actualTileSize - TileSize) / 2)
+}
+
+func playConnect() {
+	PlayPianoNote(nextNote)
+	nextNote = (nextNote + 1) % 16
+}
+
+func playSection() {
+	PlayPianoNote(12)
+	PlayPianoNote(15)
+	nextNote = 0
 }
 
 // Tile object describes a tile
@@ -215,6 +227,26 @@ func (t Tile) bitsConnected(coins uint) int {
 		if coins&dir == dir {
 			if link != nil {
 				if link.coins&oppdir == oppdir {
+					return 1
+				}
+			}
+		}
+		return 0
+	}
+	var count int
+	count += connected(NORTH, t.N, SOUTH)
+	count += connected(EAST, t.E, WEST)
+	count += connected(SOUTH, t.S, NORTH)
+	count += connected(WEST, t.W, EAST)
+	return count
+}
+
+// if this tile had coins, how many points of connection would there be?
+func (t Tile) bitsConnectedSection(coins uint, section int) int {
+	var connected = func(dir uint, link *Tile, oppdir uint) int {
+		if coins&dir == dir {
+			if link != nil {
+				if section == link.section && link.coins&oppdir == oppdir {
 					return 1
 				}
 			}
@@ -386,8 +418,12 @@ func (t *Tile) Update() error {
 	case TileRotating:
 		t.currDegrees = (t.currDegrees + 10) % 360
 		if t.currDegrees == t.targDegrees {
+			if t.bitsConnectedSection(t.coins, t.section) > 0 {
+				playConnect()
+			}
 			t.state = TileSettled
 			if t.G.IsSectionComplete(t.section) {
+				playSection()
 				t.G.FilterSection((*Tile).TriggerScaleDown, t.section)
 			}
 		}
@@ -398,8 +434,12 @@ func (t *Tile) Update() error {
 			t.currDegrees -= 10
 		}
 		if t.currDegrees == t.targDegrees {
+			if t.bitsConnectedSection(t.coins, t.section) > 0 {
+				playConnect()
+			}
 			t.state = TileSettled
 			if t.G.IsSectionComplete(t.section) {
+				playSection()
 				t.G.FilterSection((*Tile).TriggerScaleDown, t.section)
 			}
 		}

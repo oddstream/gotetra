@@ -60,10 +60,10 @@ func NewSplash() *Splash {
 
 	s.widgets = []Widget{
 		NewLabel("T E T R A                      L O O P S", Acme.large),
-		NewTextButton("EASY", Acme.large, func() { GSM.Switch(NewGrid("bubblewrap", 7, 6)) }),
+		NewTextButton("EASY", Acme.large, func() { GSM.Switch(NewGrid("bubblewrap", 9, 6)) }),
 		NewTextButton("NORMAL", Acme.large, func() { GSM.Switch(NewGrid("bubblewrap", 0, 0)) }),
 		NewTextButton("HARD", Acme.large, func() { GSM.Switch(NewGrid("puzzle", 0, 0)) }),
-		NewTextButton("HARDEST", Acme.large, func() { GSM.Switch(NewGrid("puzzle", 18, 10)) }),
+		NewTextButton("HARDEST", Acme.large, func() { GSM.Switch(NewGrid("puzzle", 14, 7)) }),
 	}
 
 	return s
@@ -71,14 +71,6 @@ func NewSplash() *Splash {
 
 // Layout implements ebiten.Game's Layout
 func (s *Splash) Layout(outsideWidth, outsideHeight int) (int, int) {
-
-	// var screenWidth, screenHeight int
-
-	// if runtime.GOARCH == "wasm" {
-	// 	screenWidth, screenHeight = outsideWidth, outsideHeight
-	// } else {
-	// 	screenWidth, screenHeight = ebiten.WindowSize()
-	// }
 
 	xCenter := outsideWidth / 2
 	// create 6 vertical slots for 5 widgets
@@ -106,8 +98,9 @@ func (s *Splash) Update() error {
 
 	s.input.Update()
 
-	for _, w := range s.widgets {
+	for i, w := range s.widgets {
 		if w.Pushed(s.input) {
+			PlayPianoNote(i)
 			w.Action()
 			break
 		}
