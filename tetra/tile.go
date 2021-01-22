@@ -74,7 +74,7 @@ type Tile struct {
 
 	tileImage   *ebiten.Image
 	currDegrees int
-	targDegrees int
+	targDegrees int // one of 0, 90, 180, 270
 	scale       float64
 	state       TileState
 	coins       uint
@@ -239,18 +239,19 @@ func (t *Tile) Rotate() {
 	}
 
 	t.coins = shiftBits(t.coins)
-	switch t.currDegrees {
-	case 0:
-		t.targDegrees = 90
-	case 90:
-		t.targDegrees = 180
-	case 180:
-		t.targDegrees = 270
-	case 270:
-		t.targDegrees = 0
-	default:
-		println(t.currDegrees)
-	}
+	// switch t.currDegrees {
+	// case 0:
+	// 	t.targDegrees = 90
+	// case 90:
+	// 	t.targDegrees = 180
+	// case 180:
+	// 	t.targDegrees = 270
+	// case 270:
+	// 	t.targDegrees = 0
+	// default:
+	// 	println(t.currDegrees)
+	// }
+	t.targDegrees = (t.currDegrees + 90) % 360 // 360 % 360 == 0
 	t.state = TileRotating
 }
 
@@ -276,6 +277,7 @@ func (t *Tile) Unrotate() {
 	default:
 		println(t.currDegrees)
 	}
+	// t.targDegrees = (t.currDegrees - 90) % 360 // -90 % 360 == 270 on calculator, but not in Go
 	t.state = TileUnrotating
 }
 
@@ -382,11 +384,7 @@ func (t *Tile) Update() error {
 			t.state = TileShrunk
 		}
 	case TileRotating:
-		t.currDegrees += 10
-		t.currDegrees = t.currDegrees % 360
-		// if t.currDegrees >= 360 {
-		// 	t.currDegrees = 0
-		// }
+		t.currDegrees = (t.currDegrees + 10) % 360
 		if t.currDegrees == t.targDegrees {
 			t.state = TileSettled
 			if t.G.IsSectionComplete(t.section) {
@@ -394,9 +392,10 @@ func (t *Tile) Update() error {
 			}
 		}
 	case TileUnrotating:
-		t.currDegrees -= 10
-		if t.currDegrees < 0 {
+		if t.currDegrees == 0 {
 			t.currDegrees = 350
+		} else {
+			t.currDegrees -= 10
 		}
 		if t.currDegrees == t.targDegrees {
 			t.state = TileSettled
@@ -429,12 +428,12 @@ func (t *Tile) debugText(screen *ebiten.Image, str string) {
 	x, y := t.homeX-overSize+t.offsetX, t.homeY-overSize+t.offsetY
 	tx := int(x) + (TileSize-w)/2
 	ty := int(y) + (TileSize-h)/2 + h
-	var c color.Color
-	if t.IsComplete() {
-		c = BasicColors["Fushia"]
-	} else {
-		c = BasicColors["Purple"]
-	}
+	var c color.Color = BasicColors["Black"]
+	// if t.IsComplete() {
+	// 	c = BasicColors["Fushia"]
+	// } else {
+	// 	c = BasicColors["Purple"]
+	// }
 	// ebitenutil.DrawRect(screen, float64(tx), float64(ty), float64(w), float64(h), c)
 	text.Draw(screen, str, Acme.small, tx, ty, c)
 }
@@ -484,6 +483,6 @@ func (t *Tile) Draw(screen *ebiten.Image) {
 
 	// t.debugText(gridImage, fmt.Sprint(t.state))
 	// t.debugText(gridImage, fmt.Sprintf("%04b", t.coins))
-	// t.debugText(screen, fmt.Sprintf("%v", t.currDegrees))
+	// t.debugText(screen, fmt.Sprintf("%v,%v", t.currDegrees, t.targDegrees))
 	// t.debugText(screen, fmt.Sprintf("%v", t.bitsConnected(t.coins)))
 }

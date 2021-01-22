@@ -72,13 +72,19 @@ func NewSplash() *Splash {
 // Layout implements ebiten.Game's Layout
 func (s *Splash) Layout(outsideWidth, outsideHeight int) (int, int) {
 
-	screenWidth, screenHeight := ebiten.WindowSize()
+	// var screenWidth, screenHeight int
 
-	xCenter := screenWidth / 2
+	// if runtime.GOARCH == "wasm" {
+	// 	screenWidth, screenHeight = outsideWidth, outsideHeight
+	// } else {
+	// 	screenWidth, screenHeight = ebiten.WindowSize()
+	// }
+
+	xCenter := outsideWidth / 2
 	// create 6 vertical slots for 5 widgets
 	yPlaces := [6]int{} // golang gotcha: can't use len(s.widgets)
 	for i := 0; i < len(yPlaces); i++ {
-		yPlaces[i] = (screenHeight / len(yPlaces)) * i
+		yPlaces[i] = (outsideHeight / len(yPlaces)) * i
 	}
 
 	lx, ly := s.logoImage.Size()

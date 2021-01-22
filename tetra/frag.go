@@ -5,6 +5,7 @@ package tetra
 import (
 	"image/color"
 	"math/rand"
+	"runtime"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -51,7 +52,12 @@ func NewFrag(x, y float64, imgSrc *ebiten.Image, currDegrees float64, c color.RG
 
 // IsVisible returns true if frag is still visible
 func (f *Frag) IsVisible() bool {
-	screenWidth, screenHeight := ebiten.WindowSize()
+	var screenWidth, screenHeight int
+	if runtime.GOARCH == "wasm" {
+		screenWidth, screenHeight = DefaultWindowWidth, DefaultWindowHeight
+	} else {
+		screenWidth, screenHeight = ebiten.WindowSize()
+	}
 	return f.xCenter > 0 && f.xCenter < float64(screenWidth) && f.yCenter > 0 && f.yCenter < float64(screenHeight)
 }
 

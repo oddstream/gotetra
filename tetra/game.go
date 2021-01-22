@@ -6,6 +6,12 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+// DefaultWindowWidth, Height are same as supplied to WASM iFrame
+const (
+	DefaultWindowWidth  int = 1920 / 2
+	DefaultWindowHeight int = 1080 / 2
+)
+
 // Game represents a game state.
 type Game struct {
 }

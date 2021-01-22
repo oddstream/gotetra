@@ -22,9 +22,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	ebiten.SetWindowTitle("Tetra Loops")
-	ebiten.SetWindowSize(1920/2, 1080/2)
-	ebiten.SetWindowResizable(true)
+	ebiten.SetWindowTitle("Tetra Loops")                                      // does nothing when runtime.GOARCH == "wasm"
+	ebiten.SetWindowSize(tetra.DefaultWindowWidth, tetra.DefaultWindowHeight) // does nothing when runtime.GOARCH == "wasm"
+	ebiten.SetWindowResizable(true)                                           // does nothing when runtime.GOARCH == "wasm"
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}

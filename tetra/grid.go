@@ -8,9 +8,9 @@ import (
 	"image/color"
 	"log"
 	"math/rand"
+	"runtime"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
@@ -66,7 +66,13 @@ func (g *Grid) findTile(x, y int) *Tile {
 // NewGrid create a Grid object
 func NewGrid(m string, w, h int) *Grid {
 
-	screenWidth, screenHeight := ebiten.WindowSize()
+	var screenWidth, screenHeight int
+
+	if runtime.GOARCH == "wasm" {
+		screenWidth, screenHeight = DefaultWindowWidth, DefaultWindowHeight
+	} else {
+		screenWidth, screenHeight = ebiten.WindowSize()
+	}
 
 	if w == 0 || h == 0 {
 		TileSize = 100
@@ -84,7 +90,6 @@ func NewGrid(m string, w, h int) *Grid {
 		} else {
 			TileSize = possibleH
 		}
-		println("TileSize", TileSize)
 		TilesAcross, TilesDown = w, h
 	}
 	LeftMargin = (screenWidth - (TilesAcross * TileSize)) / 2
@@ -440,6 +445,6 @@ func (g *Grid) Draw(screen *ebiten.Image) {
 		t.Draw(screen)
 	}
 
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("%d,%d grid of size %d, %d frags", TilesAcross, TilesDown, TileSize, len(g.frags)))
+	// ebitenutil.DebugPrint(screen, fmt.Sprintf("%d,%d grid of size %d, %d frags", TilesAcross, TilesDown, TileSize, len(g.frags)))
 
 }
