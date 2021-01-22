@@ -26,7 +26,6 @@ Expand palettes
 Use overloading
 Only Update returns an error, NOT Draw or Layout
 make Input smarter (using Pushable interface?)
-Resize window (find a use for Layout)
 WASM
 WASM on https://oddstream.games
 Android
@@ -34,7 +33,6 @@ Dominos mode
 Understand ebiten's use of build flags "// +build example" https://dave.cheney.net/2013/10/12/how-to-use-conditional-compilation-with-the-go-build-tool
 Wait for //go:embed
 expand colors.go to all web colors (will be useful one day)
-Sound
 func SetWindowIcon()
 
 Jigsaw mode
@@ -47,6 +45,7 @@ Jigsaw mode
 - drag target must be a grid slot with coins == 0
 - just one stroke will do, no need for map of struct{}{}
 
+x Sounds
 x Resizeable window
 x IsSectionComplete/IsCompleteSection
 x Spores renamed to Frags
