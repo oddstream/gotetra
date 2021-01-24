@@ -9,6 +9,7 @@ import (
 	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
 )
@@ -69,11 +70,10 @@ func initTileImages() {
 
 func playConnect() {
 	PlayPianoNote(nextNote)
-	nextNote = (nextNote + 1) % 16
+	nextNote++
 }
 
 func playSection() {
-	PlayPianoNote(12)
 	PlayPianoNote(15)
 	nextNote = 0
 }
@@ -178,27 +178,6 @@ func (t *Tile) Rect() (x0 int, y0 int, x1 int, y1 int) {
 	x1 = x0 + TileSize
 	y1 = y0 + TileSize
 	return // using named return parameters
-}
-
-func shiftBits(num uint) uint {
-	if num&0b1000 == 0b1000 {
-		num = num << 1
-		num = num & 0b1111
-		num = num | 1
-	} else {
-		num = num << 1
-	}
-	return num
-}
-
-func unshiftBits(num uint) uint {
-	if num&1 == 1 {
-		num = num >> 1
-		num = num | 0b1000
-	} else {
-		num = num >> 1
-	}
-	return num
 }
 
 // Jumble shifts the bits in the tile a random number of times
@@ -521,6 +500,24 @@ func (t *Tile) Draw(screen *ebiten.Image) {
 
 	screen.DrawImage(t.tileImage, op)
 
+	if DebugMode {
+		if t.Y != 0 {
+			ebitenutil.DrawLine(screen,
+				t.homeX,
+				t.homeY,
+				t.homeX+float64(TileSize),
+				t.homeY,
+				BasicColors["Black"])
+		}
+		if t.X != 0 {
+			ebitenutil.DrawLine(screen,
+				t.homeX,
+				t.homeY,
+				t.homeX,
+				t.homeY+float64(TileSize),
+				BasicColors["Black"])
+		}
+	}
 	// t.debugText(gridImage, fmt.Sprint(t.state))
 	// t.debugText(gridImage, fmt.Sprintf("%04b", t.coins))
 	// t.debugText(screen, fmt.Sprintf("%v,%v", t.currDegrees, t.targDegrees))

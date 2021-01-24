@@ -1,7 +1,7 @@
 ? Is Tetra a puzzle or is it bubble-wrap? If it's bubble-wrap, then it has colored sections which disappear when complete.
 ? Should this be a value, or a pointer to a value? Passing a value makes data immutable.
 
-$ GOOS=js GOARCH=wasm go build -o ../oddstream.github.io/gotetra.wasm
+$ GOOS=js GOARCH=wasm go build -ldflags="-s -w" -o ../oddstream.github.io/Tetra/gotetra.wasm
 
 ! In go, the idiomatic way to represent an empty and useless value is struct{}{}
 ! struct{} is a type, struct{}{} is an expression
@@ -14,6 +14,14 @@ $ GOOS=js GOARCH=wasm go build -o ../oddstream.github.io/gotetra.wasm
     2             &&
     1             ||
 */
+
+Place shapes
+    Randomly (current method)
+    Tracing snakes from one point to another, twisting randomly (to stop very short paths)
+    pick random edge tile
+    start path
+    move until edge encountered, changing direction randomly
+    end path
 
 Keep rotating (slowly) until coins match? Two adjacent ones may never match. Tap again to stop (at next mod 90).
 Rotate 90, and if there's nothing to match with, rotate again?

@@ -6,10 +6,13 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// DefaultWindowWidth, Height are same as supplied to WASM iFrame
-const (
-	DefaultWindowWidth  int = 1920 / 2
-	DefaultWindowHeight int = 1080 / 2
+var (
+	// DebugMode is a boolean set by command line flag -debug
+	DebugMode bool = false
+	// WindowWidth of main window in pixels
+	WindowWidth int = 1920 / 2
+	// WindowHeight of main window in pixels
+	WindowHeight int = 1080 / 2
 )
 
 // Game represents a game state.

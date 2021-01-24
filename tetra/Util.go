@@ -48,3 +48,54 @@ func drawCircle(img *ebiten.Image, x0, y0, r int, c color.Color) {
 		}
 	}
 }
+
+func shiftBits(num uint) uint {
+	if num&0b1000 == 0b1000 {
+		num = num << 1
+		num = num & 0b1111
+		num = num | 1
+	} else {
+		num = num << 1
+	}
+	return num
+}
+
+func unshiftBits(num uint) uint {
+	if num&1 == 1 {
+		num = num >> 1
+		num = num | 0b1000
+	} else {
+		num = num >> 1
+	}
+	return num
+}
+
+func oppdir(dir uint) uint {
+	switch dir {
+	case NORTH:
+		return SOUTH
+	case EAST:
+		return WEST
+	case SOUTH:
+		return NORTH
+	case WEST:
+		return EAST
+	default:
+		panic("oppdir: unknown dir")
+	}
+}
+
+func dir2tile(t *Tile, dir uint) *Tile {
+	switch dir {
+	case NORTH:
+		return t.N
+	case EAST:
+		return t.E
+	case SOUTH:
+		return t.S
+	case WEST:
+		return t.W
+	default:
+		panic("dir2link: unknown dir")
+	}
+}

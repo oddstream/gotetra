@@ -4,6 +4,7 @@ package tetra
 
 import (
 	"math"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2/audio"
 )
@@ -34,6 +35,7 @@ func toBytes(l, r []int16) []byte {
 	if len(l) != len(r) {
 		panic("len(l) must equal to len(r)")
 	}
+	// linear PCM (16bits little endian, 2 channel stereo) without a header (e.g. RIFF header)
 	b := make([]byte, len(l)*4)
 	for i := range l {
 		b[4*i] = byte(l[i])
@@ -49,6 +51,7 @@ var (
 )
 
 func init() {
+	start := time.Now()
 	// Create a reference data and use this for other frequency.
 	const refFreq = 110
 	length := 4 * sampleRate * baseFreq / refFreq
@@ -57,7 +60,7 @@ func init() {
 		refData[i] = int16(pianoAt(i, refFreq) * math.MaxInt16)
 	}
 
-	for i := 0; i < 16; i++ {
+	for i := 0; i < 32; i++ {
 		freq := baseFreq * math.Exp2(float64(i-1)/12.0)
 
 		// Calculate the wave data for the freq.
@@ -75,19 +78,20 @@ func init() {
 		n := toBytes(l, r)
 		pianoNoteSamples[int(freq)] = n
 	}
+	elapsed := time.Since(start)
+	println("elapsed", elapsed/1000.0/1000.0)
 }
 
 // playNote plays piano sound with the given frequency.
 func playNote(freq float64) {
 	f := int(freq)
 	p := audio.NewPlayerFromBytes(audioContext, pianoNoteSamples[f])
+	p.SetVolume(0.25)
 	p.Play()
 }
 
-// PlayPianoNote plays a synthesised note in the range 0 .. 15
+// PlayPianoNote plays a synthesised note
 func PlayPianoNote(i int) {
-	if i >= len(pianoNoteSamples) {
-		panic("Piano note out of range")
-	}
+	i = i % len(pianoNoteSamples)
 	playNote(baseFreq * math.Exp2(float64(i-1)/12.0))
 }

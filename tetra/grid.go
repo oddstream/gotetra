@@ -69,7 +69,7 @@ func NewGrid(m string, w, h int) *Grid {
 	var screenWidth, screenHeight int
 
 	if runtime.GOARCH == "wasm" {
-		screenWidth, screenHeight = DefaultWindowWidth, DefaultWindowHeight
+		screenWidth, screenHeight = WindowWidth, WindowHeight
 	} else {
 		screenWidth, screenHeight = ebiten.WindowSize()
 	}
@@ -115,9 +115,7 @@ func NewGrid(m string, w, h int) *Grid {
 	}
 
 	g.ud = NewUserData()
-	// NextLevel will bump the UserData.Level, which isn't what we want, so
-	g.ud.Level-- // TODO this is ugly, maybe .CompletedLevel?
-	g.NextLevel()
+	g.CreateNextLevel()
 
 	g.frags = make([]*Frag, 0, TilesAcross*TilesDown)
 
@@ -184,7 +182,7 @@ func (g *Grid) ColorTiles() {
 		for _, t := range g.tiles {
 			t.section = 0 // any number will do
 			{
-				n := g.ud.Level % len(g.palette)
+				n := g.ud.CompletedLevels % len(g.palette)
 				colName := g.palette[n]
 				t.color = ExtendedColors[colName]
 			}
@@ -234,15 +232,34 @@ func (g *Grid) IsComplete() bool {
 	return true
 }
 
-// NextLevel resets game data and moves the puzzle to the next level
-func (g *Grid) NextLevel() {
+// CreateNextLevel resets game data and moves the puzzle to the next level
+func (g *Grid) CreateNextLevel() {
 	for _, t := range g.tiles {
 		t.Reset()
 	}
 
-	g.ud.Level++
-	g.ud.Save()
-	rand.Seed(int64(g.ud.Level))
+	rand.Seed(int64(g.ud.CompletedLevels))
+
+	// y3 := TilesDown / 3
+	// y6 := y3 + y3
+	// {
+	// 	tp := &TilePath{start: g.findTile(0, y3)}
+	// 	tp.Run(EAST)
+	// }
+	// {
+	// 	tp := &TilePath{start: g.findTile(TilesAcross-1, y6)}
+	// 	tp.Run(WEST)
+	// }
+	// x3 := TilesAcross / 3
+	// x6 := x3 + x3
+	// {
+	// 	tp := &TilePath{start: g.findTile(x3, 0)}
+	// 	tp.Run(SOUTH)
+	// }
+	// {
+	// 	tp := &TilePath{start: g.findTile(x6, TilesDown-1)}
+	// 	tp.Run(NORTH)
+	// }
 
 	for _, t := range g.tiles {
 		t.PlaceRandomCoins()
@@ -347,7 +364,9 @@ func (g *Grid) Update() error {
 				src.offsetX, src.offsetY = 0, 0 // snap back home
 				src.state = TileSettled         // otherwise Tile won't rotate
 				if g.IsComplete() {
-					g.NextLevel()
+					g.ud.CompletedLevels++
+					g.ud.Save()
+					g.CreateNextLevel()
 				} else {
 					src.Rotate()
 				}
@@ -377,27 +396,7 @@ func (g *Grid) Update() error {
 		}
 		// else the stroke isn't released, so the tile is being dragged
 	}
-	/*
-		g.input.Update()
 
-		if g.input.pt.X != 0 && g.input.pt.Y != 0 {
-			if g.IsComplete() {
-				g.NextLevel()
-			} else {
-				// could treat the Tiles as Widgets
-				// implement Tile.Pushed(), Tile.Action()
-				// would mean asking each tile during Tile.Update()
-				// or creating an object that links Input with a list of widgets
-				// Grid has Widget[] instead of []Tile
-				tile := g.FindTileAt(g.input.pt)
-				if tile != nil {
-					tile.Rotate()
-				}
-			}
-		} else if g.input.backPressed {
-			GSM.Switch(NewSplash())
-		}
-	*/
 	for _, t := range g.tiles {
 		t.Update()
 	}
@@ -425,7 +424,7 @@ func (g *Grid) Draw(screen *ebiten.Image) {
 	screen.Fill(g.colorBackground)
 
 	{
-		str := fmt.Sprint(g.ud.Level)
+		str := fmt.Sprint(g.ud.CompletedLevels + 1)
 		bound, _ := font.BoundString(Acme.huge, str)
 		w := (bound.Max.X - bound.Min.X).Ceil()
 		h := (bound.Max.Y - bound.Min.Y).Ceil()

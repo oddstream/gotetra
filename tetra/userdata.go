@@ -12,8 +12,8 @@ import (
 
 // UserData contains the level the user is on
 type UserData struct {
-	Copyright string
-	Level     int
+	Copyright       string
+	CompletedLevels int
 }
 
 func fullPath() (string, error) {
@@ -46,7 +46,8 @@ func makeConfigDir() {
 // it always returns an object, even if file does not exist
 func NewUserData() *UserData {
 
-	ud := &UserData{Copyright: "Copyright ©️ 2020-2021 oddstream.games", Level: 1}
+	ud := &UserData{Copyright: "Copyright ©️ 2020-2021 oddstream.games"}
+	// let CompletedLevels default to zero
 
 	if runtime.GOARCH == "wasm" {
 		return ud

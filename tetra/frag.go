@@ -54,7 +54,7 @@ func NewFrag(x, y float64, imgSrc *ebiten.Image, currDegrees float64, c color.RG
 func (f *Frag) IsVisible() bool {
 	var screenWidth, screenHeight int
 	if runtime.GOARCH == "wasm" {
-		screenWidth, screenHeight = DefaultWindowWidth, DefaultWindowHeight
+		screenWidth, screenHeight = WindowWidth, WindowHeight
 	} else {
 		screenWidth, screenHeight = ebiten.WindowSize()
 	}
