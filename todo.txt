@@ -53,6 +53,7 @@ Jigsaw mode
 - drag target must be a grid slot with coins == 0
 - just one stroke will do, no need for map of struct{}{}
 
+x refactor to include Tile.edges and simplify IsComplete()
 x Sounds
 x Resizeable window
 x IsSectionComplete/IsCompleteSection

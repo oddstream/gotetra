@@ -46,6 +46,8 @@ var (
 	overSize         float64
 	halfTileSize     float64
 	nextNote         int
+	bits             = [4]uint{NORTH, EAST, SOUTH, WEST} // map a direction (0..3) to it's bits
+	opps             = [4]uint{SOUTH, WEST, NORTH, EAST} // map a direction (0..3) to it's opposite bits
 )
 
 func initTileImages() {
@@ -78,11 +80,16 @@ func playSection() {
 	nextNote = 0
 }
 
+// Edge object descibes the edge of a Tile
+type Edge struct {
+	t *Tile
+}
+
 // Tile object describes a tile
 type Tile struct {
-	G          *Grid
-	X, Y       int
-	N, E, S, W *Tile
+	G     *Grid
+	X, Y  int
+	edges [4]*Tile
 
 	tileImage   *ebiten.Image
 	currDegrees int
@@ -119,16 +126,12 @@ func (t *Tile) Reset() {
 
 // PlaceRandomCoins sets up a random config for this tile
 func (t *Tile) PlaceRandomCoins() {
-	bits := [4]uint{NORTH, EAST, SOUTH, WEST}
-	opps := [4]uint{SOUTH, WEST, NORTH, EAST}
-	links := [4]*Tile{t.N, t.E, t.S, t.W}
-
 	// t.coins = 0
 	for d := 0; d < 4; d++ {
-		if rand.Float64() < 0.2 {
-			if links[d] != nil {
+		if t.edges[d] != nil {
+			if rand.Float64() < 0.2 {
 				t.coins |= bits[d]
-				links[d].coins |= opps[d]
+				t.edges[d].coins |= opps[d]
 			}
 		}
 	}
@@ -137,15 +140,13 @@ func (t *Tile) PlaceRandomCoins() {
 // ColorConnected assigns color and section to tiles connected (by coinage) to this tile
 func (t *Tile) ColorConnected(colorName string, section int) {
 	// println(colorName, ExtendedColors[colorName].R, ExtendedColors[colorName].G, ExtendedColors[colorName].B)
-	bits := [4]uint{NORTH, EAST, SOUTH, WEST}
-	links := [4]*Tile{t.N, t.E, t.S, t.W}
 
 	t.color = ExtendedColors[colorName]
 	t.section = section
 
 	for d := 0; d < 4; d++ {
 		if t.coins&bits[d] != 0 {
-			tn := links[d]
+			tn := t.edges[d]
 			// unconnected tiles will have coins 0 and not have been colored (ie still be black)
 			if tn != nil && tn.coins != 0 && tn.color == colorUnsectioned {
 				tn.ColorConnected(colorName, section)
@@ -200,44 +201,20 @@ func (t *Tile) Jumble() {
 	// }
 }
 
-// if this tile had coins, how many points of connection would there be?
-func (t Tile) bitsConnected(coins uint) int {
-	var connected = func(dir uint, link *Tile, oppdir uint) int {
-		if coins&dir == dir {
-			if link != nil {
-				if link.coins&oppdir == oppdir {
-					return 1
-				}
-			}
+func (t *Tile) unconnected(d int) bool {
+	dirBits := bits[d]
+	if t.coins&dirBits == dirBits {
+		link := t.edges[d]
+		if link == nil {
+			return true
 		}
-		return 0
-	}
-	var count int
-	count += connected(NORTH, t.N, SOUTH)
-	count += connected(EAST, t.E, WEST)
-	count += connected(SOUTH, t.S, NORTH)
-	count += connected(WEST, t.W, EAST)
-	return count
-}
-
-// if this tile had coins, how many points of connection would there be?
-func (t Tile) bitsConnectedSection(coins uint, section int) int {
-	var connected = func(dir uint, link *Tile, oppdir uint) int {
-		if coins&dir == dir {
-			if link != nil {
-				if section == link.section && link.coins&oppdir == oppdir {
-					return 1
-				}
-			}
+		oppBits := opps[d]
+		if (t.section == link.section) && ((link.coins & oppBits) == oppBits) {
+			return false
 		}
-		return 0
+		return true
 	}
-	var count int
-	count += connected(NORTH, t.N, SOUTH)
-	count += connected(EAST, t.E, WEST)
-	count += connected(SOUTH, t.S, NORTH)
-	count += connected(WEST, t.W, EAST)
-	return count
+	return false
 }
 
 // Rotate shifts the tile 90 degrees clockwise
@@ -300,60 +277,10 @@ func (t *Tile) IsComplete() bool {
 	if 0 == t.coins {
 		return true
 	}
-	var test = func(dir uint, link *Tile, oppdir uint) bool {
-		if (t.coins & dir) == dir {
-			if (link == nil) || (link.coins&oppdir) == 0 {
-				return false
-			}
+	for d := 0; d < 4; d++ {
+		if t.unconnected(d) {
+			return false
 		}
-		return true
-	}
-	if !test(NORTH, t.N, SOUTH) {
-		return false
-	}
-	if !test(EAST, t.E, WEST) {
-		return false
-	}
-	if !test(SOUTH, t.S, NORTH) {
-		return false
-	}
-	if !test(WEST, t.W, EAST) {
-		return false
-	}
-	return true
-}
-
-// IsSectionComplete returns true if the tile aligns properly with it's neighbours
-func (t *Tile) IsSectionComplete(section int) bool {
-	// By design, Go does not support optional parameters, default parameter values, or method overloading.
-	if t.state != TileSettled {
-		return false
-	}
-	if 0 == t.coins {
-		return true
-	}
-	if section != t.section {
-		return false
-	}
-	var test = func(dir uint, link *Tile, oppdir uint) bool {
-		if (t.coins & dir) == dir {
-			if (link == nil) || (link.section != section) || (link.coins&oppdir) == 0 {
-				return false
-			}
-		}
-		return true
-	}
-	if !test(NORTH, t.N, SOUTH) {
-		return false
-	}
-	if !test(EAST, t.E, WEST) {
-		return false
-	}
-	if !test(SOUTH, t.S, NORTH) {
-		return false
-	}
-	if !test(WEST, t.W, EAST) {
-		return false
 	}
 	return true
 }
@@ -397,10 +324,10 @@ func (t *Tile) Update() error {
 	case TileRotating:
 		t.currDegrees = (t.currDegrees + 10) % 360
 		if t.currDegrees == t.targDegrees {
-			if t.bitsConnectedSection(t.coins, t.section) > 0 {
+			t.state = TileSettled // Tile must be settled to be complete
+			if t.IsComplete() {
 				playConnect()
 			}
-			t.state = TileSettled
 			if t.G.IsSectionComplete(t.section) {
 				playSection()
 				t.G.FilterSection((*Tile).TriggerScaleDown, t.section)
@@ -413,10 +340,10 @@ func (t *Tile) Update() error {
 			t.currDegrees -= 10
 		}
 		if t.currDegrees == t.targDegrees {
-			if t.bitsConnectedSection(t.coins, t.section) > 0 {
+			t.state = TileSettled // Tile must be settled to be complete
+			if t.IsComplete() {
 				playConnect()
 			}
-			t.state = TileSettled
 			if t.G.IsSectionComplete(t.section) {
 				playSection()
 				t.G.FilterSection((*Tile).TriggerScaleDown, t.section)

@@ -69,33 +69,3 @@ func unshiftBits(num uint) uint {
 	}
 	return num
 }
-
-func oppdir(dir uint) uint {
-	switch dir {
-	case NORTH:
-		return SOUTH
-	case EAST:
-		return WEST
-	case SOUTH:
-		return NORTH
-	case WEST:
-		return EAST
-	default:
-		panic("oppdir: unknown dir")
-	}
-}
-
-func dir2tile(t *Tile, dir uint) *Tile {
-	switch dir {
-	case NORTH:
-		return t.N
-	case EAST:
-		return t.E
-	case SOUTH:
-		return t.S
-	case WEST:
-		return t.W
-	default:
-		panic("dir2link: unknown dir")
-	}
-}

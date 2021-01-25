@@ -60,7 +60,7 @@ func init() {
 		refData[i] = int16(pianoAt(i, refFreq) * math.MaxInt16)
 	}
 
-	for i := 0; i < 32; i++ {
+	for i := 0; i < 16; i++ {
 		freq := baseFreq * math.Exp2(float64(i-1)/12.0)
 
 		// Calculate the wave data for the freq.

@@ -60,7 +60,7 @@ func NewSplash() *Splash {
 
 	s.widgets = []Widget{
 		NewLabel("T E T R A                      L O O P S", Acme.large),
-		NewTextButton("EASY", Acme.large, func() { GSM.Switch(NewGrid("bubblewrap", 9, 6)) }),
+		NewTextButton("EASY", Acme.large, func() { GSM.Switch(NewGrid("bubblewrap", 6, 5)) }),
 		NewTextButton("NORMAL", Acme.large, func() { GSM.Switch(NewGrid("bubblewrap", 0, 0)) }),
 		NewTextButton("HARD", Acme.large, func() { GSM.Switch(NewGrid("puzzle", 0, 0)) }),
 		NewTextButton("HARDEST", Acme.large, func() { GSM.Switch(NewGrid("puzzle", 14, 7)) }),

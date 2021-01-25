@@ -11,6 +11,7 @@ import (
 	"runtime"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
@@ -108,10 +109,10 @@ func NewGrid(m string, w, h int) *Grid {
 	for _, t := range g.tiles {
 		x := t.X
 		y := t.Y
-		t.N = g.findTile(x, y-1)
-		t.E = g.findTile(x+1, y)
-		t.S = g.findTile(x, y+1)
-		t.W = g.findTile(x-1, y)
+		t.edges[0] = g.findTile(x, y-1)
+		t.edges[1] = g.findTile(x+1, y)
+		t.edges[2] = g.findTile(x, y+1)
+		t.edges[3] = g.findTile(x-1, y)
 	}
 
 	g.ud = NewUserData()
@@ -196,7 +197,7 @@ func (g *Grid) ColorTiles() {
 func (g *Grid) IsSectionComplete(section int) bool {
 	for _, t := range g.tiles {
 		if t.section == section {
-			if !t.IsSectionComplete(section) {
+			if !t.IsComplete() {
 				return false
 			}
 		}
@@ -445,6 +446,7 @@ func (g *Grid) Draw(screen *ebiten.Image) {
 		t.Draw(screen)
 	}
 
-	// ebitenutil.DebugPrint(screen, fmt.Sprintf("%d,%d grid of size %d, %d frags", TilesAcross, TilesDown, TileSize, len(g.frags)))
-
+	if DebugMode {
+		ebitenutil.DebugPrint(screen, fmt.Sprintf("%d,%d grid, tile size %d, %d frags", TilesAcross, TilesDown, TileSize, len(g.frags)))
+	}
 }
