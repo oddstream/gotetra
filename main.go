@@ -10,6 +10,7 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
 
 	// load png decoder in main package
 	// _ "image/png"
@@ -19,12 +20,15 @@ import (
 )
 
 func init() {
-	flag.BoolVar(&tetra.DebugMode, "debug", true, "turn debug graphics on")
+	flag.BoolVar(&tetra.DebugMode, "debug", false, "turn debug graphics on")
 	flag.IntVar(&tetra.WindowWidth, "width", 1920/2, "width of window in pixels")
 	flag.IntVar(&tetra.WindowHeight, "height", 1080/2, "height of window in pixels")
 }
 
 func main() {
+	for _, a := range os.Args {
+		println(a)
+	}
 	//	os.Args[0] == "/home/gilbert/gotetra/__debug_bin"
 	flag.Parse()
 

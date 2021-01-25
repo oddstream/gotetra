@@ -91,7 +91,6 @@ func NewGrid(m string, w, h int) *Grid {
 		} else {
 			TileSize = possibleH
 		}
-		println("TileSize", TileSize)
 		TilesAcross, TilesDown = w, h
 	}
 	LeftMargin = (screenWidth - (TilesAcross * TileSize)) / 2

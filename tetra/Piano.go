@@ -79,7 +79,7 @@ func init() {
 		pianoNoteSamples[int(freq)] = n
 	}
 	elapsed := time.Since(start)
-	println("elapsed", elapsed/1000.0/1000.0)
+	println("piano sounds built in", elapsed/1000.0/1000.0)
 }
 
 // playNote plays piano sound with the given frequency.
