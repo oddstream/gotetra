@@ -10,8 +10,6 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"github.com/hajimehoshi/ebiten/v2/text"
-	"golang.org/x/image/font"
 )
 
 // MinimumScale is the smallest a shape gets, used when creating and when completed
@@ -53,7 +51,7 @@ var (
 func initTileImages() {
 	// used to be func init(), but TileSize may not be set yet, hence this func called from Grid init
 
-	if 0 == TileSize {
+	if TileSize == 0 {
 		log.Fatal("Tile dimensions not set")
 	}
 
@@ -78,11 +76,6 @@ func playConnect() {
 func playSection() {
 	PlayPianoNote(15)
 	nextNote = 0
-}
-
-// Edge object descibes the edge of a Tile
-type Edge struct {
-	t *Tile
 }
 
 // Tile object describes a tile
@@ -219,7 +212,7 @@ func (t *Tile) unconnected(d int) bool {
 
 // Rotate shifts the tile 90 degrees clockwise
 func (t *Tile) Rotate() {
-	if 0 == t.coins {
+	if t.coins == 0 {
 		return
 	}
 	if t.state != TileSettled {
@@ -245,7 +238,7 @@ func (t *Tile) Rotate() {
 
 // Unrotate shifts the tile 90 degrees anticlockwise
 func (t *Tile) Unrotate() {
-	if 0 == t.coins {
+	if t.coins == 0 {
 		return
 	}
 	if t.state != TileSettled {
@@ -274,7 +267,7 @@ func (t *Tile) IsComplete() bool {
 	if t.state != TileSettled {
 		return false
 	}
-	if 0 == t.coins {
+	if t.coins == 0 {
 		return true
 	}
 	for d := 0; d < 4; d++ {
@@ -302,7 +295,7 @@ func (t *Tile) Layout() {
 // Update the tile state (transitions, user input)
 func (t *Tile) Update() error {
 
-	if 0 == t.coins {
+	if t.coins == 0 {
 		return nil
 	}
 
@@ -367,22 +360,22 @@ func (t *Tile) Update() error {
 	return nil
 }
 
-func (t *Tile) debugText(screen *ebiten.Image, str string) {
-	bound, _ := font.BoundString(Acme.small, str)
-	w := (bound.Max.X - bound.Min.X).Ceil()
-	h := (bound.Max.Y - bound.Min.Y).Ceil()
-	x, y := t.homeX-overSize+t.offsetX, t.homeY-overSize+t.offsetY
-	tx := int(x) + (TileSize-w)/2
-	ty := int(y) + (TileSize-h)/2 + h
-	var c color.Color = BasicColors["Black"]
-	// if t.IsComplete() {
-	// 	c = BasicColors["Fushia"]
-	// } else {
-	// 	c = BasicColors["Purple"]
-	// }
-	// ebitenutil.DrawRect(screen, float64(tx), float64(ty), float64(w), float64(h), c)
-	text.Draw(screen, str, Acme.small, tx, ty, c)
-}
+// func (t *Tile) debugText(screen *ebiten.Image, str string) {
+// 	bound, _ := font.BoundString(Acme.small, str)
+// 	w := (bound.Max.X - bound.Min.X).Ceil()
+// 	h := (bound.Max.Y - bound.Min.Y).Ceil()
+// 	x, y := t.homeX-overSize+t.offsetX, t.homeY-overSize+t.offsetY
+// 	tx := int(x) + (TileSize-w)/2
+// 	ty := int(y) + (TileSize-h)/2 + h
+// 	var c color.Color = BasicColors["Black"]
+// 	// if t.IsComplete() {
+// 	// 	c = BasicColors["Fushia"]
+// 	// } else {
+// 	// 	c = BasicColors["Purple"]
+// 	// }
+// 	// ebitenutil.DrawRect(screen, float64(tx), float64(ty), float64(w), float64(h), c)
+// 	text.Draw(screen, str, Acme.small, tx, ty, c)
+// }
 
 // Draw handles rendering of Tile object
 func (t *Tile) Draw(screen *ebiten.Image) {

@@ -4,9 +4,6 @@ package tetra
 
 import (
 	"image"
-	"image/color"
-
-	"github.com/hajimehoshi/ebiten/v2"
 )
 
 // InRect returns true of px,py is within Rect returned by function parameter
@@ -22,32 +19,32 @@ func lerp(v0 float64, v1 float64, t float64) float64 {
 
 // https://stackoverflow.com/questions/51626905/drawing-circles-with-two-radius-in-golang
 // https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
-func drawCircle(img *ebiten.Image, x0, y0, r int, c color.Color) {
-	x, y, dx, dy := r-1, 0, 1, 1
-	err := dx - (r * 2)
+// func drawCircle(img *ebiten.Image, x0, y0, r int, c color.Color) {
+// 	x, y, dx, dy := r-1, 0, 1, 1
+// 	err := dx - (r * 2)
 
-	for x > y {
-		img.Set(x0+x, y0+y, c)
-		img.Set(x0+y, y0+x, c)
-		img.Set(x0-y, y0+x, c)
-		img.Set(x0-x, y0+y, c)
-		img.Set(x0-x, y0-y, c)
-		img.Set(x0-y, y0-x, c)
-		img.Set(x0+y, y0-x, c)
-		img.Set(x0+x, y0-y, c)
+// 	for x > y {
+// 		img.Set(x0+x, y0+y, c)
+// 		img.Set(x0+y, y0+x, c)
+// 		img.Set(x0-y, y0+x, c)
+// 		img.Set(x0-x, y0+y, c)
+// 		img.Set(x0-x, y0-y, c)
+// 		img.Set(x0-y, y0-x, c)
+// 		img.Set(x0+y, y0-x, c)
+// 		img.Set(x0+x, y0-y, c)
 
-		if err <= 0 {
-			y++
-			err += dy
-			dy += 2
-		}
-		if err > 0 {
-			x--
-			dx += 2
-			err += dx - (r * 2)
-		}
-	}
-}
+// 		if err <= 0 {
+// 			y++
+// 			err += dy
+// 			dy += 2
+// 		}
+// 		if err > 0 {
+// 			x--
+// 			dx += 2
+// 			err += dx - (r * 2)
+// 		}
+// 	}
+// }
 
 func shiftBits(num uint) uint {
 	if num&0b1000 == 0b1000 {

@@ -31,7 +31,6 @@ type Grid struct {
 	mode            string  // "bubblewrap" | "puzzle"
 	tiles           []*Tile // a slice (not array!) of pointers to Tile objects
 	palette         Palette
-	colors          []*color.RGBA // a slice of pointers to colors for the tiles, one color per section
 	ud              *UserData
 	frags           []*Frag
 	colorBackground color.RGBA
@@ -167,7 +166,7 @@ func (g *Grid) ColorTiles() {
 		nextSection := 0
 		tile := g.findUnsectionedTile()
 		if tile == nil {
-			panic("no first unsection tile")
+			panic("no first unsectioned tile")
 		}
 		for tile != nil {
 			tile.ColorConnected(g.palette[nextColor], nextSection)
@@ -179,13 +178,11 @@ func (g *Grid) ColorTiles() {
 			tile = g.findUnsectionedTile()
 		}
 	case "puzzle":
+		n := g.ud.CompletedLevels % len(g.palette)
+		colorName := g.palette[n]
 		for _, t := range g.tiles {
 			t.section = 0 // any number will do
-			{
-				n := g.ud.CompletedLevels % len(g.palette)
-				colName := g.palette[n]
-				t.color = ExtendedColors[colName]
-			}
+			t.color = ExtendedColors[colorName]
 		}
 	default:
 		log.Fatal("unknown mode", g.mode)
@@ -322,7 +319,7 @@ func (g *Grid) Update() error {
 		s = NewStroke(&MouseStrokeSource{})
 	}
 	ts := inpututil.JustPressedTouchIDs()
-	if ts != nil && len(ts) == 1 {
+	if len(ts) == 1 {
 		s = NewStroke(&TouchStrokeSource{ts[0]})
 	}
 

@@ -11,7 +11,6 @@ import (
 )
 
 const fragSize float64 = 20.0
-const halfFragSize float64 = fragSize / 2.0
 const fragSizeInt int = 20
 
 // Frag is an object that floats around the screen

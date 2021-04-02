@@ -129,7 +129,7 @@ func (i *Input) Update() {
 		x, y = ebiten.CursorPosition()
 	}
 	ts := inpututil.JustPressedTouchIDs()
-	if ts != nil && len(ts) == 1 {
+	if len(ts) == 1 {
 		if inpututil.IsTouchJustReleased(ts[0]) {
 			x, y = ebiten.TouchPosition(ts[0])
 		}

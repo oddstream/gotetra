@@ -26,11 +26,13 @@ func init() {
 }
 
 func main() {
-	for _, a := range os.Args {
-		println(a)
-	}
-	//	os.Args[0] == "/home/gilbert/gotetra/__debug_bin"
 	flag.Parse()
+
+	if tetra.DebugMode {
+		for i, a := range os.Args {
+			println(i, a)
+		}
+	}
 
 	game, err := tetra.NewGame()
 	if err != nil {
