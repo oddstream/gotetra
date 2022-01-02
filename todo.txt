@@ -1,7 +1,7 @@
 ? Is Tetra a puzzle or is it bubble-wrap? If it's bubble-wrap, then it has colored sections which disappear when complete.
 ? Should this be a value, or a pointer to a value? Passing a value makes data immutable.
 
-$ GOOS=js GOARCH=wasm go build -ldflags="-s -w" -o ../oddstream.github.io/Tetra/gotetra.wasm
+$ GOOS=js GOARCH=wasm go build -ldflags="-s -w" -o ../oddstream.github.io/Tetra/gotetra.wasm -tags browser  
 
 ! In go, the idiomatic way to represent an empty and useless value is struct{}{}
 ! struct{} is a type, struct{}{} is an expression

@@ -1,5 +1,3 @@
-// Copyright ©️ 2020 oddstream.games
-
 package tetra
 
 import (
@@ -35,6 +33,8 @@ type Grid struct {
 	frags           []*Frag
 	colorBackground color.RGBA
 	stroke          *Stroke
+	WindowWidth     int
+	WindowHeight    int
 }
 
 func (g *Grid) findTile(x, y int) *Tile {
@@ -92,6 +92,7 @@ func NewGrid(m string, w, h int) *Grid {
 		}
 		TilesAcross, TilesDown = w, h
 	}
+	println("TileSize", TileSize, "Across", TilesAcross, "Down", TilesDown)
 	LeftMargin = (screenWidth - (TilesAcross * TileSize)) / 2
 	TopMargin = (screenHeight - (TilesDown * TileSize)) / 2
 
@@ -282,6 +283,8 @@ func (g *Grid) AddFrag(x, y int, img *ebiten.Image, deg int, col color.RGBA) {
 
 // Layout implements ebiten.Game's Layout.
 func (g *Grid) Layout(outsideWidth, outsideHeight int) (int, int) {
+	g.WindowWidth = outsideWidth
+	g.WindowHeight = outsideHeight
 	LeftMargin = (outsideWidth - (TilesAcross * TileSize)) / 2
 	TopMargin = (outsideHeight - (TilesDown * TileSize)) / 2
 	for _, t := range g.tiles {
@@ -292,10 +295,6 @@ func (g *Grid) Layout(outsideWidth, outsideHeight int) (int, int) {
 
 // Update the board state (transitions, user input)
 func (g *Grid) Update() error {
-
-	if inpututil.IsKeyJustReleased(ebiten.KeyBackspace) {
-		GSM.Switch(NewSplash())
-	}
 
 	if g.stroke == nil {
 		_, yoff := ebiten.Wheel()
@@ -405,11 +404,15 @@ func (g *Grid) Update() error {
 	{
 		newFrags := make([]*Frag, 0, len(g.frags))
 		for _, sp := range g.frags {
-			if sp.IsVisible() {
+			if sp.IsVisible(g.WindowWidth, g.WindowHeight) {
 				newFrags = append(newFrags, sp)
 			}
 		}
 		g.frags = newFrags
+	}
+
+	if inpututil.IsKeyJustReleased(ebiten.KeyBackspace) {
+		GSM.Switch(NewSplash())
 	}
 
 	return nil

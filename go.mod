@@ -1,15 +1,21 @@
 module oddstream.games/tetra
 
-go 1.16
+go 1.17
 
 require (
 	github.com/fogleman/gg v1.3.0
-	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20210311203641-62640a716d48 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
-	github.com/hajimehoshi/bitmapfont/v2 v2.1.3 // indirect
-	github.com/hajimehoshi/ebiten/v2 v2.0.7
-	golang.org/x/exp v0.0.0-20210220032938-85be41e4509f // indirect
-	golang.org/x/image v0.0.0-20210220032944-ac19c3e999fb
-	golang.org/x/sys v0.0.0-20210331175145-43e1dd70ce54 // indirect
-	golang.org/x/text v0.3.6 // indirect
+	github.com/hajimehoshi/ebiten/v2 v2.2.3
+	golang.org/x/image v0.0.0-20211028202545-6944b10bf410
+)
+
+require (
+	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20211213063430-748e38ca8aec // indirect
+	github.com/hajimehoshi/oto/v2 v2.1.0-alpha.5 // indirect
+	github.com/jezek/xgb v0.0.0-20210312150743-0e0f116e1240 // indirect
+	golang.org/x/exp v0.0.0-20211221223016-e29036178569 // indirect
+	golang.org/x/mobile v0.0.0-20211207041440-4e6c2922fdee // indirect
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
+	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
+	golang.org/x/text v0.3.7 // indirect
 )

@@ -1,5 +1,3 @@
-// Copyright ©️ 2020-2021 oddstream.games
-
 package tetra
 
 import (

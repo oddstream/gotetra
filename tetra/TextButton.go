@@ -66,6 +66,10 @@ func (tb *TextButton) Update() error {
 // Draw handles rendering of TextButton object
 func (tb *TextButton) Draw(screen *ebiten.Image) {
 
+	if tb.width == 0 || tb.height == 0 {
+		return
+	}
+
 	bgImage := ebiten.NewImage(tb.width, tb.height)
 	bgImage.Fill(BasicColors["Black"])
 	op := &ebiten.DrawImageOptions{}

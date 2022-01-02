@@ -1,9 +1,8 @@
-// Copyright ©️ 2020 oddstream.games
-
 package tetra
 
 import (
 	"bytes"
+	_ "embed" // go:embed only allowed in Go files that import "embed"
 	"image"
 	"log"
 	"os"
@@ -12,20 +11,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-// Widget type implements UpDate, Draw and Pushed
-type Widget interface {
-	Update() error
-	Draw(*ebiten.Image)
-	SetPosition(int, int)
-	Rect() (int, int, int, int)
-	Pushed(*Input) bool
-	Action()
-}
-
-// Pushable type implements Rect
-// type Pushable interface {
-// 	Rect() (int, int, int, int)
-// }
+//go:embed assets/raccoon280x180.png
+var logoBytes []byte
 
 // Splash represents a game state.
 type Splash struct {
@@ -38,21 +25,7 @@ type Splash struct {
 // NewSplash creates and initializes a Splash/GameState object
 func NewSplash() *Splash {
 	s := &Splash{input: NewInput()}
-	// var err error
-	// s.logoImage, _, err = ebitenutil.NewImageFromFile("/home/gilbert/Tetra/assets/oddstream logo.png")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// Decode image from a byte slice instead of a file so that this works in any working directory.
-	// If you want to use a file, there are some options:
-	// 1) Use os.Open and pass the file to the image decoder.
-	//    This is a very regular way, but doesn't work on browsers.
-	// 2) Use ebitenutil.OpenFile and pass the file to the image decoder.
-	//    This works even on browsers.
-	// 3) Use ebitenutil.NewImageFromFile to create an ebiten.Image directly from a file.
-	//    This also works on browsers.
-	img, _, err := image.Decode(bytes.NewReader(Logo_png))
+	img, _, err := image.Decode(bytes.NewReader(logoBytes))
 	if err != nil {
 		log.Fatal(err)
 	}

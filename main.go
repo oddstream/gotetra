@@ -1,4 +1,4 @@
-// Copyright ©️ 2020 oddstream.games
+// Copyright ©️ 2020-2022 oddstream.games
 
 // go mod init oddstream.games/tetra
 // go mod tidy
